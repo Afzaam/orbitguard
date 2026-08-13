@@ -1,0 +1,542 @@
+/*
+  OrbitGuard – Mission Control Styling
+  
+  Design Palette:
+  - Background: Deep space navy (#0a0e27, #1a1f3a)
+  - Accent: Cyber cyan/teal (#00d9ff, #00f0ff)
+  - Text: Clean white/light gray
+  - Borders: Subtle cyan glow for a tech-forward feel
+  
+  Goal: Calm, trustworthy, high-contrast, readable for all audiences
+*/
+
+/* ========================================================================== */
+/* RESET & BASE STYLES                                                      */
+/* ========================================================================== */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 100%);
+    color: #e0e0e0;
+    line-height: 1.6;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ========================================================================== */
+/* HEADER / MISSION CONTROL BANNER                                          */
+/* ========================================================================== */
+
+.header {
+    background: rgba(10, 14, 39, 0.95);
+    border-bottom: 2px solid #00d9ff;
+    padding: 2rem 1rem;
+    text-align: center;
+    box-shadow: 0 4px 15px rgba(0, 217, 255, 0.1);
+}
+
+.header-content {
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+.logo {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #00f0ff;
+    letter-spacing: 2px;
+    margin-bottom: 0.5rem;
+    text-shadow: 0 0 10px rgba(0, 217, 255, 0.3);
+}
+
+.logo-icon {
+    margin-right: 0.5rem;
+}
+
+.tagline {
+    font-size: 0.95rem;
+    color: #a0a0c0;
+    font-weight: 300;
+    letter-spacing: 1px;
+}
+
+/* ========================================================================== */
+/* MAIN CONTAINER & SECTIONS                                                */
+/* ========================================================================== */
+
+.container {
+    flex: 1;
+    max-width: 1000px;
+    margin: 0 auto;
+    width: 100%;
+    padding: 2rem 1rem;
+}
+
+section {
+    background: rgba(26, 31, 58, 0.6);
+    border: 1px solid rgba(0, 217, 255, 0.2);
+    border-radius: 8px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    backdrop-filter: blur(10px);
+}
+
+section h2 {
+    font-size: 1.5rem;
+    color: #00f0ff;
+    margin-bottom: 0.5rem;
+    text-shadow: 0 0 8px rgba(0, 217, 255, 0.2);
+}
+
+section h3 {
+    font-size: 1.2rem;
+    color: #00d9ff;
+    margin-bottom: 1rem;
+}
+
+.help-text {
+    color: #a0a0c0;
+    font-size: 0.95rem;
+    margin-bottom: 1.5rem;
+    line-height: 1.5;
+}
+
+/* ========================================================================== */
+/* INPUT SECTION: TELEMETRY TEXTAREA                                        */
+/* ========================================================================== */
+
+.telemetry-textarea {
+    width: 100%;
+    padding: 1rem;
+    background: rgba(10, 14, 39, 0.5);
+    border: 1px solid rgba(0, 217, 255, 0.3);
+    border-radius: 6px;
+    color: #e0e0e0;
+    font-family: 'Courier New', monospace;
+    font-size: 0.95rem;
+    resize: vertical;
+    transition: all 0.3s ease;
+}
+
+.telemetry-textarea:focus {
+    outline: none;
+    border-color: #00f0ff;
+    box-shadow: 0 0 10px rgba(0, 217, 255, 0.3);
+    background: rgba(10, 14, 39, 0.7);
+}
+
+.telemetry-textarea::placeholder {
+    color: #505070;
+}
+
+/* ========================================================================== */
+/* BUTTONS                                                                   */
+/* ========================================================================== */
+
+.button-group {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.btn {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 6px;
+    font-size: 1rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    flex: 1;
+    min-width: 150px;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #00d9ff, #00f0ff);
+    color: #0a0e27;
+    box-shadow: 0 4px 12px rgba(0, 217, 255, 0.3);
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 217, 255, 0.5);
+}
+
+.btn-primary:active {
+    transform: translateY(0);
+}
+
+.btn-primary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.btn-secondary {
+    background: rgba(0, 217, 255, 0.1);
+    color: #00d9ff;
+    border: 1px solid rgba(0, 217, 255, 0.3);
+}
+
+.btn-secondary:hover {
+    background: rgba(0, 217, 255, 0.2);
+    border-color: #00d9ff;
+}
+
+/* ========================================================================== */
+/* LOADING INDICATOR                                                         */
+/* ========================================================================== */
+
+.loading-indicator {
+    text-align: center;
+    padding: 2rem;
+    background: rgba(26, 31, 58, 0.6);
+    border: 1px solid rgba(0, 217, 255, 0.2);
+    border-radius: 8px;
+    margin-bottom: 2rem;
+}
+
+.loading-indicator.hidden {
+    display: none;
+}
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid rgba(0, 217, 255, 0.2);
+    border-top: 3px solid #00f0ff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 1rem;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.loading-indicator p {
+    color: #a0a0c0;
+    font-size: 0.95rem;
+}
+
+/* ========================================================================== */
+/* ALERTS                                                                    */
+/* ========================================================================== */
+
+.alert {
+    padding: 1rem 1.5rem;
+    border-radius: 6px;
+    margin-bottom: 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.alert.hidden {
+    display: none;
+}
+
+.alert-error {
+    background: rgba(255, 67, 54, 0.1);
+    border: 1px solid rgba(255, 67, 54, 0.3);
+    color: #ff9999;
+}
+
+.alert-close {
+    cursor: pointer;
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #ff9999;
+}
+
+.alert-close:hover {
+    color: #ff5555;
+}
+
+/* ========================================================================== */
+/* RESULTS SECTION                                                           */
+/* ========================================================================== */
+
+.results-section {
+    animation: slideIn 0.4s ease;
+}
+
+.results-section.hidden {
+    display: none;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.results-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+/* ========================================================================== */
+/* RESULT CARD (One per telemetry line)                                     */
+/* ========================================================================== */
+
+.result-card {
+    background: rgba(10, 14, 39, 0.5);
+    border: 1px solid rgba(0, 217, 255, 0.15);
+    border-left: 4px solid;
+    border-radius: 6px;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.result-card:hover {
+    background: rgba(10, 14, 39, 0.7);
+    box-shadow: 0 4px 12px rgba(0, 217, 255, 0.1);
+}
+
+/* Color-coded left border by verdict */
+.result-card.normal {
+    border-left-color: #00d966;
+}
+
+.result-card.suspicious {
+    border-left-color: #ffb300;
+}
+
+.result-card.likely-attack {
+    border-left-color: #ff4444;
+}
+
+.result-line-number {
+    display: inline-block;
+    background: rgba(0, 217, 255, 0.1);
+    color: #00d9ff;
+    padding: 0.25rem 0.75rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+}
+
+.result-telemetry {
+    font-family: 'Courier New', monospace;
+    background: rgba(0, 0, 0, 0.3);
+    color: #e0e0e0;
+    padding: 0.75rem;
+    border-radius: 4px;
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+    word-break: break-word;
+}
+
+.result-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+}
+
+.verdict {
+    font-size: 1.1rem;
+    font-weight: 700;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.verdict.normal {
+    background: rgba(0, 217, 102, 0.2);
+    color: #00d966;
+}
+
+.verdict.suspicious {
+    background: rgba(255, 179, 0, 0.2);
+    color: #ffb300;
+}
+
+.verdict.likely-attack {
+    background: rgba(255, 68, 68, 0.2);
+    color: #ff4444;
+}
+
+.confidence {
+    font-size: 0.85rem;
+    color: #a0a0c0;
+    padding: 0.4rem 0.8rem;
+    background: rgba(160, 160, 192, 0.1);
+    border-radius: 4px;
+}
+
+.result-body {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+}
+
+@media (max-width: 768px) {
+    .result-body {
+        grid-template-columns: 1fr;
+    }
+}
+
+.result-explanation,
+.result-next-step {
+    padding: 1rem;
+    background: rgba(0, 217, 255, 0.05);
+    border-left: 2px solid rgba(0, 217, 255, 0.3);
+    border-radius: 4px;
+}
+
+.result-explanation h5,
+.result-next-step h5 {
+    color: #00d9ff;
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.result-explanation p,
+.result-next-step p {
+    color: #e0e0e0;
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+/* ========================================================================== */
+/* INFO SECTION                                                              */
+/* ========================================================================== */
+
+.info-content {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+}
+
+.info-card {
+    background: rgba(0, 217, 255, 0.05);
+    border: 1px solid rgba(0, 217, 255, 0.2);
+    padding: 1.5rem;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+}
+
+.info-card:hover {
+    background: rgba(0, 217, 255, 0.1);
+    border-color: #00d9ff;
+}
+
+.info-card h4 {
+    color: #00f0ff;
+    margin-bottom: 0.75rem;
+    font-size: 1.1rem;
+}
+
+.info-card p {
+    color: #a0a0c0;
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+/* ========================================================================== */
+/* FOOTER                                                                    */
+/* ========================================================================== */
+
+.footer {
+    background: rgba(10, 14, 39, 0.95);
+    border-top: 1px solid rgba(0, 217, 255, 0.2);
+    padding: 1.5rem;
+    text-align: center;
+    color: #a0a0c0;
+    font-size: 0.85rem;
+    margin-top: auto;
+}
+
+/* ========================================================================== */
+/* RESPONSIVE DESIGN                                                         */
+/* ========================================================================== */
+
+@media (max-width: 768px) {
+    .logo {
+        font-size: 2rem;
+    }
+
+    .tagline {
+        font-size: 0.85rem;
+    }
+
+    .container {
+        padding: 1rem;
+    }
+
+    section {
+        padding: 1.5rem;
+    }
+
+    .button-group {
+        flex-direction: column;
+    }
+
+    .btn {
+        width: 100%;
+        min-width: auto;
+    }
+
+    .result-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+
+/* ========================================================================== */
+/* ACCESSIBILITY & HIGH CONTRAST                                            */
+/* ========================================================================== */
+
+@media (prefers-contrast: more) {
+    .header {
+        border-bottom-width: 3px;
+    }
+
+    section {
+        border-width: 2px;
+    }
+
+    .telemetry-textarea,
+    .btn-secondary {
+        border-width: 2px;
+    }
+
+    .result-card {
+        border-width: 2px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}

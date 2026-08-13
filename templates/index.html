@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OrbitGuard – Telemetry Triage Assistant</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <!-- ===================================================================== -->
+    <!-- HEADER / MISSION CONTROL BANNER                                     -->
+    <!-- ===================================================================== -->
+    <header class="header">
+        <div class="header-content">
+            <h1 class="logo">
+                <span class="logo-icon">🛰</span>
+                OrbitGuard
+            </h1>
+            <p class="tagline">AI-Assisted Telemetry Triage for Space Missions</p>
+        </div>
+    </header>
+
+    <!-- ===================================================================== -->
+    <!-- MAIN CONTAINER                                                       -->
+    <!-- ===================================================================== -->
+    <main class="container">
+        
+        <!-- ================================================================= -->
+        <!-- INPUT SECTION: Telemetry Paste Area                             -->
+        <!-- ================================================================= -->
+        <section class="input-section">
+            <h2>📋 Telemetry Input</h2>
+            <p class="help-text">
+                Paste spacecraft or ground-station telemetry/log lines below. 
+                OrbitGuard will triage each line for signs of cyberattack.
+            </p>
+            
+            <form id="triageForm">
+                <textarea 
+                    id="telemetryInput" 
+                    class="telemetry-textarea" 
+                    placeholder="Example:
+SENSOR_TEMP: 45.2°C [NORMAL]
+COMMAND_RECV: POWER_DOWN from unknown_user at 03:15 UTC
+SIGNAL_STRENGTH: -120 dBm [WEAK]"
+                    rows="8"
+                ></textarea>
+                
+                <div class="button-group">
+                    <button type="submit" class="btn btn-primary" id="runButton">
+                        ▶ Run Triage
+                    </button>
+                    <button type="reset" class="btn btn-secondary" id="clearButton">
+                        ↻ Clear
+                    </button>
+                </div>
+            </form>
+        </section>
+
+        <!-- ================================================================= -->
+        <!-- LOADING INDICATOR                                               -->
+        <!-- ================================================================= -->
+        <div id="loadingIndicator" class="loading-indicator hidden">
+            <div class="spinner"></div>
+            <p>Analyzing telemetry...</p>
+        </div>
+
+        <!-- ================================================================= -->
+        <!-- ERROR ALERT                                                      -->
+        <!-- ================================================================= -->
+        <div id="errorAlert" class="alert alert-error hidden">
+            <span class="alert-close" onclick="closeAlert('errorAlert')">&times;</span>
+            <strong>Error:</strong> <span id="errorMessage"></span>
+        </div>
+
+        <!-- ================================================================= -->
+        <!-- RESULTS SECTION: Triage Output                                  -->
+        <!-- ================================================================= -->
+        <section id="resultsSection" class="results-section hidden">
+            <h2>📊 Triage Results</h2>
+            <p class="help-text">
+                Below is OrbitGuard's analysis of each telemetry line. 
+                Use these insights to guide your investigation.
+            </p>
+            
+            <div id="resultsList" class="results-list">
+                <!-- Results will be inserted here by JavaScript -->
+            </div>
+        </section>
+
+        <!-- ================================================================= -->
+        <!-- INFO SECTION: How It Works                                       -->
+        <!-- ================================================================= -->
+        <section class="info-section">
+            <h3>ℹ️ How OrbitGuard Works</h3>
+            <div class="info-content">
+                <div class="info-card">
+                    <h4>🔍 Detection</h4>
+                    <p>
+                        OrbitGuard analyzes each line for patterns associated with 
+                        cyberattacks: unexpected commands, signal spoofing, unusual 
+                        access times, or out-of-sequence data.
+                    </p>
+                </div>
+                <div class="info-card">
+                    <h4>⚡ Verdicts</h4>
+                    <p>
+                        Each line receives a verdict: <strong>Normal</strong>, 
+                        <strong>Suspicious</strong>, or <strong>Likely Attack</strong>, 
+                        with a confidence level.
+                    </p>
+                </div>
+                <div class="info-card">
+                    <h4>👤 Human-Centered</h4>
+                    <p>
+                        OrbitGuard is a <strong>triage assistant</strong>. The human 
+                        operator makes the final call—this tool helps you understand 
+                        what matters faster.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ===================================================================== -->
+    <!-- FOOTER                                                              -->
+    <!-- ===================================================================== -->
+    <footer class="footer">
+        <p>OrbitGuard v1.0 | IBM AI Builders Challenge – Advance Space Exploration with AI</p>
+    </footer>
+
+    <!-- Load JavaScript -->
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
