@@ -1,284 +1,194 @@
-# OrbitGuard 🛰️
-## AI-Assisted Telemetry Triage for Space Missions
+# 🛰️ OrbitGuard
+### AI-Assisted Telemetry Triage for Space Missions
 
-**Stage 1: UI Skeleton** – Building the interface first, AI logic to follow.
-
----
-
-## What Is OrbitGuard?
-
-OrbitGuard is an **AI triage assistant** for space-mission operators. You paste spacecraft or ground-station telemetry lines, click "Run Triage," and OrbitGuard flags entries that could signal a **cyberattack** (unexpected commands, signal spoofing, strange access times, out-of-sequence data) and separates them from ordinary glitches.
-
-For each line, it provides:
-1. **Verdict** – Normal / Suspicious / Likely Attack (with confidence level)
-2. **Explanation** – Why it looks that way in plain language
-3. **Next Step** – Recommended action for the human operator
-
-**Critical:** OrbitGuard is a **triage assistant**, not an autonomous detector. The human operator makes the final call—this tool helps you understand what matters faster.
+> **Built for the IBM AI Builders Challenge — Advance Space Exploration with AI**
 
 ---
 
-## Project Structure
+## 📡 What Is OrbitGuard?
+
+OrbitGuard is an AI-powered triage assistant that helps space-mission operators cut through the noise in spacecraft and ground-station telemetry logs — fast. Paste your telemetry, click **Run Triage**, and receive a plain-language breakdown of every line: what looks normal, what looks suspicious, and exactly what to do next.
+
+---
+
+## 🌌 The Problem
+
+Modern space systems — satellites, ground stations, and mission-control networks — are increasingly targeted by sophisticated cyberattacks. The challenge for operators is that **the symptoms of a cyberattack often look identical to an ordinary malfunction**: an unexpected command, an anomalous signal, an off-schedule data packet.
+
+When something goes wrong during a mission, operators may have only minutes to decide whether they're dealing with a hardware glitch or an active intrusion. Getting that call wrong can mean losing a spacecraft.
+
+---
+
+## 🛡️ The Solution
+
+OrbitGuard acts as a **first-pass triage partner** for the human operator. It ingests raw telemetry lines and uses AI to classify each one, delivering:
+
+| Output | Description |
+|---|---|
+| **Verdict** | `Normal` / `Suspicious` / `Likely Attack` with a confidence score |
+| **Explanation** | A plain-language reason — no jargon, no black box |
+| **Next Step** | A concrete recommended action for the operator |
+
+OrbitGuard does not make autonomous decisions. It surfaces what matters, explains its reasoning, and keeps the human operator firmly in control.
+
+---
+
+## ✨ Key Features
+
+- 🔍 **Line-by-line telemetry analysis** — every log entry gets its own verdict
+- 🧠 **AI-generated explanations** — understand *why* something looks suspicious, not just *that* it does
+- ✅ **Actionable next steps** — no ambiguity; each result tells the operator what to do
+- 🎨 **Mission-control UI** — deep navy + cyan aesthetic built for clarity under pressure
+- ⚡ **Zero setup for operators** — paste logs, click a button, get results
+- ♿ **Accessible design** — high-contrast mode, reduced-motion support, large readable fonts
+- 🔒 **Secrets-safe** — API keys live in `.env`, never in the browser or repository
+
+---
+
+## 🤖 AI Approach & Architecture
+
+OrbitGuard uses **IBM Granite** (via **IBM watsonx**) as its reasoning engine. Granite was chosen for its strong performance on structured analytical tasks and its alignment with IBM's enterprise-grade AI principles.
+
+The analysis pipeline is intentionally straightforward:
 
 ```
-OrbitGuard/
-├── app.py                 # Flask web server (main backend)
-├── requirements.txt       # Python dependencies
-├── .env.example           # Template for environment variables
-├── .gitignore             # Git ignore rules (protects .env)
-├── README.md              # This file
-├── templates/
-│   └── index.html         # Main UI (HTML skeleton)
-└── static/
-    ├── style.css          # Mission-control styling (deep navy + cyan)
-    └── script.js          # Frontend logic (form, AJAX, results)
+[ Operator pastes telemetry logs ]
+            │
+            ▼
+  [ Flask backend receives text ]
+            │
+            ▼
+  [ IBM Granite (via watsonx) analyzes each line ]
+  → Classifies: Normal / Suspicious / Likely Attack
+  → Generates plain-language explanation
+  → Suggests operator next step
+            │
+            ▼
+  [ Results rendered as color-coded verdict cards ]
+  🟢 Normal   🟡 Suspicious   🔴 Likely Attack
+```
+
+The prompt is structured to keep Granite grounded in the telemetry context — it is given the telemetry line, the mission context, and asked to reason step by step before delivering a verdict. This reduces hallucination and keeps explanations factual.
+
+**IBM Docling** is integrated in the pipeline to handle uploaded log files, converting `.txt`, `.csv`, `.pdf`, and other formats into structured telemetry that feeds directly into the analysis.
+
+---
+
+## 🧰 Tech Stack
+
+| Layer | Technology |
+|---|---|
+| **Backend** | Python 3, Flask |
+| **AI Model** | IBM Granite (via IBM watsonx) |
+| **AI Platform** | IBM watsonx.ai |
+| **Document Parsing** | IBM Docling |
+| **Frontend** | HTML5, CSS3, Vanilla JavaScript |
+| **Config** | python-dotenv |
+
+---
+
+## 🤝 How IBM Bob Was Used
+
+IBM Bob (the AI coding assistant embedded in VS Code) was the **primary development tool** for this entire project. Bob was used to:
+
+- **Plan the architecture** — breaking the project into stages and mapping out the Flask routes, frontend structure, and AI integration approach before a single line of code was written
+- **Scaffold the codebase** — generating the initial `app.py`, `index.html`, `style.css`, and `script.js` files with full comments and structure
+- **Iterate on the UI** — refining the mission-control aesthetic, color scheme, and component layout through conversation
+- **Write this README** — the full documentation was drafted collaboratively with Bob based on the actual project files
+
+Bob acted as a knowledgeable co-developer throughout — not just an autocomplete tool, but a planning partner that understood the project goals and helped make deliberate technical decisions.
+
+---
+
+## 📸 Screenshots
+
+> *(Add your screenshot here — drag an image into this section or paste a relative path below)*
+
+```
+![OrbitGuard UI](static/screenshot.png)
 ```
 
 ---
 
-## Quick Start
+## 🚀 Setup & How to Run
 
-### 1. Install Python Dependencies
+### 1. Clone the repository
 
 ```bash
-# Navigate to the OrbitGuard folder
-cd "path\to\IBM Bob\August Challenge\OrbitGuard"
+git clone <your-repo-url>
+cd OrbitGuard
+```
 
-# Create a virtual environment (optional but recommended)
+### 2. Create a virtual environment and install dependencies
+
+```bash
 python -m venv venv
-venv\Scripts\activate
+venv\Scripts\activate        # Windows
+# source venv/bin/activate   # macOS / Linux
 
-# Install Flask and dependencies
 pip install -r requirements.txt
 ```
 
-### 2. Create Your `.env` File
-
-Copy `.env.example` to `.env`:
+### 3. Configure environment variables
 
 ```bash
-copy .env.example .env
+copy .env.example .env       # Windows
+# cp .env.example .env       # macOS / Linux
 ```
 
-Edit `.env` with your settings (for now, just keep the defaults):
+Open `.env` and fill in your IBM watsonx credentials:
 
-```
-FLASK_DEBUG=True
-FLASK_ENV=development
+```env
+WATSONX_API_KEY=your-api-key-here
+WATSONX_PROJECT_ID=your-project-id-here
+WATSONX_URL=https://api.us-south.ml.cloud.ibm.com
 ```
 
-### 3. Run the Flask App
+### 4. Run the app
 
 ```bash
 python app.py
 ```
 
-You should see:
-```
- * Running on http://127.0.0.1:5000
- * Debug mode: on
-```
+### 5. Open in your browser
 
-### 4. Open in Your Browser
+Navigate to **http://127.0.0.1:5000**, paste some telemetry, and click **Run Triage**.
 
-Visit: **http://127.0.0.1:5000**
-
-You'll see the OrbitGuard UI with:
-- A mission-control aesthetic (deep navy background, cyan accents)
-- A telemetry input box
-- A "Run Triage" button
-- An info section explaining how it works
-
-### 5. Try It Out
-
-Paste some sample telemetry in the text box:
-
+**Sample telemetry to try:**
 ```
 SENSOR_TEMP: 45.2°C [NORMAL]
 COMMAND_RECV: POWER_DOWN from unknown_user at 03:15 UTC
 SIGNAL_STRENGTH: -120 dBm [WEAK]
 ```
 
-Click **"Run Triage"** → You'll see placeholder results showing what the real output will look like.
+---
+
+## 🔭 Future Work
+
+- **Real satellite data integration** — connect OrbitGuard to live telemetry streams from publicly available satellite feeds (e.g., NORAD, NASA Open Data)
+- **Live ground-station feeds** — real-time WebSocket ingestion from ground-station software, enabling continuous background triage rather than manual paste-and-run
+- **Mission profile context** — allow operators to specify the spacecraft type, mission phase, and known anomaly baselines so the AI can reason with mission-specific knowledge
+- **Audit trail** — persistent logging of every triage session so operators can review decisions and retrain the model on confirmed incidents
+- **Multi-language support** — internationalization for international mission-control teams
 
 ---
 
-## Design Principles
+## 📁 Project Structure
 
-### Aesthetic
-- **Deep space-navy background** (#0a0e27, #1a1f3a) – calm and trustworthy
-- **Cyber cyan/teal accents** (#00d9ff, #00f0ff) – signals security and tech
-- **Clean, uncluttered layout** – easy to scan
-- **High contrast** – readable for all audiences
-
-### Interaction
-- Simple, large buttons
-- Clear visual feedback (loading spinner, color-coded verdicts)
-- Monospace font for telemetry (shows it's technical data)
-- Color-coded result cards:
-  - 🟢 **Green** = Normal
-  - 🟡 **Orange/Yellow** = Suspicious
-  - 🔴 **Red** = Likely Attack
-
-### Accessibility
-- Supports high-contrast mode
-- Respects `prefers-reduced-motion` (no animations if user prefers)
-- Large, readable fonts
-- Good color contrast
+```
+OrbitGuard/
+├── app.py                 # Flask backend — routes and watsonx integration
+├── requirements.txt       # Python dependencies
+├── .env.example           # Environment variable template
+├── .gitignore             # Keeps secrets out of version control
+├── README.md              # This file
+├── templates/
+│   └── index.html         # Main UI
+└── static/
+    ├── style.css          # Mission-control styling (deep navy + cyan)
+    └── script.js          # Frontend logic (form, AJAX, result cards)
+```
 
 ---
 
-## How It Works (Now & Later)
-
-### Stage 1: UI Skeleton ✅ (You Are Here)
-- HTML form for telemetry input
-- Mock response endpoint (returns sample results)
-- Mission-control UI
-- Ready to connect to AI in the next stage
-
-### Stage 2: AI Integration (Next)
-- Connect to **IBM Granite** via **IBM watsonx**
-- Backend receives telemetry → calls watsonx API → returns real analysis
-- Secret API key stored in `.env` (never in browser)
-
-### Stage 3: File Upload (Future)
-- Use **IBM Docling** to parse uploaded log files
-- Convert various formats (.txt, .csv, .pdf, etc.) into structured telemetry
-- Feed into the AI pipeline
-
----
-
-## File Reference
-
-### `app.py`
-The Flask web server. Handles:
-- Route `/` – serves the main UI
-- Route `/api/triage` (POST) – receives telemetry, returns triage results
-  - Stage 1: Returns mock/placeholder results
-  - Stage 2: Will call IBM Granite via watsonx
-
-**Key things to update in Stage 2:**
-1. Import watsonx SDK
-2. Replace the mock results with actual API calls
-3. Parse the response and format for the frontend
-
-### `templates/index.html`
-The main UI page (HTML skeleton). Includes:
-- Header with OrbitGuard logo and tagline
-- Input section with a textarea for telemetry
-- "Run Triage" and "Clear" buttons
-- Loading indicator (spinner)
-- Error alert
-- Results section (populated by JavaScript)
-- Info cards explaining how OrbitGuard works
-- Footer
-
-### `static/style.css`
-Mission-control styling. Covers:
-- Color scheme (deep navy + cyan)
-- Typography (clean, readable)
-- Component styles (buttons, cards, forms)
-- Responsive design (mobile-friendly)
-- Accessibility features (high contrast, reduced motion)
-
-### `static/script.js`
-Frontend logic. Handles:
-- Form submission (listens to "Run Triage" click)
-- AJAX request to `/api/triage` endpoint
-- Display of results (creates result cards dynamically)
-- Error handling and display
-- HTML escaping (prevents XSS attacks)
-
-### `.env.example`
-Template for environment variables. Copy to `.env` and fill in your secrets.
-
-### `.gitignore`
-Protects sensitive files (`.env`, `__pycache__`, etc.) from being committed.
-
-### `requirements.txt`
-Python dependencies:
-- `Flask` – web framework
-- `python-dotenv` – loads `.env` variables
-
----
-
-## Next Steps (Stage 2: AI Integration)
-
-1. **Set up IBM watsonx account** and get API credentials
-2. **Add credentials to `.env`**:
-   ```
-   WATSONX_API_KEY=xxx
-   WATSONX_PROJECT_ID=yyy
-   WATSONX_URL=https://...
-   ```
-3. **Install watsonx SDK** in `requirements.txt`
-4. **Update `app.py`** to call watsonx API instead of returning mock results
-5. **Test end-to-end** with real telemetry
-
----
-
-## Common Issues & Fixes
-
-### "ModuleNotFoundError: No module named 'flask'"
-- Make sure you've installed dependencies: `pip install -r requirements.txt`
-- Make sure your virtual environment is activated
-
-### "Address already in use" on port 5000
-- Another app is using port 5000
-- Change the port in `app.py`: `app.run(..., port=5001, ...)`
-- Or kill the existing process using port 5000
-
-### UI looks broken
-- Clear your browser cache (Ctrl+Shift+Delete)
-- Hard refresh (Ctrl+Shift+R)
-- Make sure static files are loading (check browser console for 404 errors)
-
-### `.env` variables not loading
-- Make sure you've renamed `.env.example` to `.env` (not `.env.txt`)
-- Restart the Flask server after editing `.env`
-
----
-
-## Code Comments & Learning
-
-Every file is heavily commented in plain English for beginners. If you want to understand a section:
-1. Find the comment with `===` borders (section header)
-2. Read the comments above the code
-3. The code itself is simple and straightforward
-
----
-
-## Design Notes for Judges / Non-Experts
-
-OrbitGuard's goal is to help **human operators spot and understand suspicious activity faster**, not to make autonomous security decisions. Each analysis includes:
-- **Why** it looks suspicious (plain-language explanation)
-- **What confidence** the AI has in that assessment
-- **What action** the operator should take next
-
-This keeps the human in control and ensures accountability.
-
----
-
-## About This Project
-
-- **Entry:** IBM AI Builders Challenge – "Advance Space Exploration with AI" (August 2026)
-- **Developer:** A beginner learning AI, Python, and web development
-- **Primary Tool:** IBM Bob (VS Code Copilot)
-- **Stack:** Python Flask + HTML/CSS/JavaScript
-- **Stage 1 Goal:** Build a clean, trustworthy UI that's ready for AI integration
-
----
-
-## Questions?
-
-If you run into trouble:
-1. Check the comments in each file
-2. Read the "Common Issues" section above
-3. Test by pasting sample telemetry and watching the mock results
-4. Review the Stage 2 notes when you're ready to add AI
-
-Good luck with your space mission! 🚀
-
----
-
-*OrbitGuard v1.0 | Built with ❤️ and IBM Bob*
+*OrbitGuard — Built with ❤️ and IBM Bob | IBM AI Builders Challenge 2026*
