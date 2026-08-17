@@ -16,6 +16,8 @@ const triageForm = document.getElementById('triageForm');
 const telemetryInput = document.getElementById('telemetryInput');
 const runButton = document.getElementById('runButton');
 const clearButton = document.getElementById('clearButton');
+const uploadButton = document.getElementById('uploadButton');
+const fileInput = document.getElementById('fileInput');
 const loadingIndicator = document.getElementById('loadingIndicator');
 const errorAlert = document.getElementById('errorAlert');
 const errorMessage = document.getElementById('errorMessage');
@@ -93,6 +95,56 @@ async function runTriage() {
         // Hide loading indicator and re-enable button
         loadingIndicator.classList.add('hidden');
         runButton.disabled = false;
+    }
+}
+
+/**
+ * Upload a .txt or .csv file to /api/upload and triage it via Docling.
+ * Reuses displayResults() for rendering — no duplication of result logic.
+ */
+async function uploadFile() {
+    const file = fileInput.files[0];
+
+    if (!file) {
+        showError('Please choose a .txt or .csv file before uploading.');
+        return;
+    }
+
+    hideError();
+    resultsSection.classList.add('hidden');
+    resultsList.innerHTML = '';
+    loadingIndicator.classList.remove('hidden');
+    uploadButton.disabled = true;
+
+    try {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const response = await fetch('/api/upload', {
+            method: 'POST',
+            body: formData,
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error || 'Failed to process uploaded file');
+        }
+
+        if (data.success && data.results) {
+            displayResults(data.results);
+        } else {
+            throw new Error(data.error || 'Unexpected response from server');
+        }
+    } catch (error) {
+        console.error('Error during file upload triage:', error);
+        showError(error.message);
+    } finally {
+        loadingIndicator.classList.remove('hidden');
+        loadingIndicator.classList.add('hidden');
+        uploadButton.disabled = false;
+        // Reset the file input so the same file can be re-uploaded if needed
+        fileInput.value = '';
     }
 }
 

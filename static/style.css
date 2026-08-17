@@ -197,6 +197,79 @@ section h3 {
 }
 
 /* ========================================================================== */
+/* FILE UPLOAD SECTION                                                       */
+/* ========================================================================== */
+
+.upload-divider {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    margin: 1.5rem 0 1.2rem;
+    color: #a0a0c0;
+    font-size: 0.85rem;
+    letter-spacing: 0.5px;
+}
+
+.upload-divider::before,
+.upload-divider::after {
+    content: '';
+    flex: 1;
+    border-top: 1px solid rgba(0, 217, 255, 0.2);
+}
+
+.upload-divider span {
+    padding: 0 1rem;
+}
+
+.upload-section {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.upload-label {
+    color: #a0a0c0;
+    font-size: 0.9rem;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.file-input {
+    flex: 1;
+    min-width: 0;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(0, 217, 255, 0.3);
+    border-radius: 4px;
+    padding: 0.45rem 0.75rem;
+    color: #e0e0e0;
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+
+.file-input::-webkit-file-upload-button {
+    background: rgba(0, 217, 255, 0.12);
+    border: 1px solid rgba(0, 217, 255, 0.4);
+    border-radius: 3px;
+    color: #00d9ff;
+    padding: 0.3rem 0.8rem;
+    cursor: pointer;
+    font-size: 0.85rem;
+    margin-right: 0.6rem;
+}
+
+.file-input::-webkit-file-upload-button:hover {
+    background: rgba(0, 217, 255, 0.22);
+}
+
+.upload-hint {
+    width: 100%;
+    color: #606080;
+    font-size: 0.8rem;
+    margin-top: 0;
+}
+
+/* ========================================================================== */
 /* LOADING INDICATOR                                                         */
 /* ========================================================================== */
 

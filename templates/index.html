@@ -26,19 +26,21 @@
     <main class="container">
         
         <!-- ================================================================= -->
-        <!-- INPUT SECTION: Telemetry Paste Area                             -->
+        <!-- INPUT SECTION: Telemetry Paste Area + File Upload               -->
         <!-- ================================================================= -->
         <section class="input-section">
             <h2>📋 Telemetry Input</h2>
             <p class="help-text">
-                Paste spacecraft or ground-station telemetry/log lines below. 
+                Paste spacecraft or ground-station telemetry/log lines below,
+                or upload a <strong>.txt</strong> or <strong>.csv</strong> file.
                 OrbitGuard will triage each line for signs of cyberattack.
             </p>
-            
+
+            <!-- Paste option -->
             <form id="triageForm">
-                <textarea 
-                    id="telemetryInput" 
-                    class="telemetry-textarea" 
+                <textarea
+                    id="telemetryInput"
+                    class="telemetry-textarea"
                     placeholder="Example:
 SENSOR_TEMP: 45.2°C [NORMAL]
 COMMAND_RECV: POWER_DOWN from unknown_user at 03:15 UTC
@@ -55,6 +57,33 @@ SIGNAL_STRENGTH: -120 dBm [WEAK]"
                     </button>
                 </div>
             </form>
+
+            <!-- Divider -->
+            <div class="upload-divider">
+                <span>or upload a file</span>
+            </div>
+
+            <!-- File upload option -->
+            <div class="upload-section">
+                <label for="fileInput" class="upload-label">
+                    📂 Choose a .txt or .csv telemetry file
+                </label>
+                <input
+                    type="file"
+                    id="fileInput"
+                    class="file-input"
+                    accept=".txt,.csv"
+                >
+                <button
+                    type="button"
+                    class="btn btn-primary"
+                    id="uploadButton"
+                    onclick="uploadFile()"
+                >
+                    ⬆ Upload &amp; Triage
+                </button>
+                <p class="upload-hint">Accepted formats: .txt, .csv — max one file at a time.</p>
+            </div>
         </section>
 
         <!-- ================================================================= -->
