@@ -71,6 +71,15 @@ granite_model = None
 # Imported lazily so the app still runs if docling isn't installed yet.
 # ============================================================================
 
+# Disable torch.compile() inside Docling before anything is imported.
+# Docling's inference engine calls torch.compile() by default for speed, but
+# that requires a C++ compiler (cl.exe on Windows) which is not present on
+# this machine.  Setting this env var tells Docling's settings layer to skip
+# compilation entirely; models run in normal (eager) mode instead.
+# Must be set before DocumentConverter is imported so the settings object
+# reads the correct value at class-definition time.
+os.environ.setdefault('DOCLING_INFERENCE_COMPILE_TORCH_MODELS', 'false')
+
 docling_available = False
 try:
     from docling.document_converter import DocumentConverter as _DoclingConverter
@@ -117,12 +126,13 @@ except Exception as e:
 
 
 # ============================================================================
-# PROMPT BUILDER
+# PROMPT BUILDERS
 # ============================================================================
 
 def build_triage_prompt(telemetry_text: str) -> str:
     """
-    Build the structured prompt sent to IBM Granite.
+    Build the structured prompt sent to IBM Granite for a single telemetry
+    line (used by the paste-text and .txt/.csv upload paths).
 
     We give Granite a clear role (space-mission cybersecurity expert),
     a strict output format (JSON array), and the actual telemetry lines
@@ -145,6 +155,36 @@ Respond with ONLY the JSON array. Do not include any preamble, commentary, or ma
 
 Telemetry lines to analyse:
 {numbered_lines}
+
+JSON response:
+"""
+    return prompt
+
+
+def build_incident_report_prompt(report_text: str) -> str:
+    """
+    Build a prompt for a PDF mission incident report.
+
+    Unlike the telemetry prompt, the entire document is treated as one
+    unit of analysis — not split into lines.  Granite is asked to return
+    a JSON array containing exactly ONE item that summarises the whole
+    report: overall verdict, confidence, explanation, and recommended
+    next action for the human operator.
+    """
+    prompt = f"""You are an expert space-mission cybersecurity analyst reviewing a mission incident report submitted by a ground control team.
+
+Read the full incident report below and provide a single overall triage assessment of it. Respond with a JSON array containing exactly ONE object with these fields:
+- "line_number": 1
+- "telemetry": a one-sentence summary of what the report is about (max 20 words)
+- "verdict": one of "Normal", "Suspicious", or "Likely Attack"
+- "confidence": a float between 0.0 and 1.0
+- "explanation": 2–3 plain-English sentences summarising the key findings and why you reached this verdict
+- "next_step": a concrete action the human operator should take next based on the report contents
+
+Respond with ONLY the JSON array. Do not include any preamble, commentary, or markdown — just the raw JSON array starting with [ and ending with ].
+
+Mission incident report:
+{report_text.strip()}
 
 JSON response:
 """
@@ -193,14 +233,15 @@ def parse_granite_response(raw_response: str, telemetry_text: str) -> list:
 
 
 # ============================================================================
-# MOCK FALLBACK
+# MOCK FALLBACKS
 # Returns safe placeholder results if the watsonx call fails.
 # ============================================================================
 
 def get_mock_results(telemetry_text: str) -> list:
     """
     Return per-line mock results based on the actual pasted lines.
-    Used as a fallback when the watsonx API call fails.
+    Used as a fallback when the watsonx API call fails for .txt/.csv uploads
+    or pasted telemetry.
     """
     lines = [l.strip() for l in telemetry_text.strip().splitlines() if l.strip()]
     mock_results = []
@@ -216,24 +257,95 @@ def get_mock_results(telemetry_text: str) -> list:
     return mock_results
 
 
+def get_mock_result_for_document() -> list:
+    """
+    Return a single mock result for a PDF incident report.
+    Used as a fallback when the watsonx API call fails for PDF uploads.
+    """
+    return [{
+        'line_number': 1,
+        'telemetry': 'Mission incident report (AI analysis unavailable)',
+        'verdict': 'Suspicious',
+        'confidence': 0.5,
+        'explanation': 'AI analysis unavailable — this is a placeholder result. Check your watsonx credentials.',
+        'next_step': 'Review the incident report manually and verify your API connection.'
+    }]
+
+
 # ============================================================================
 # DOCLING TEXT EXTRACTOR
 # ============================================================================
 
 def extract_text_with_docling(file_path: str) -> str:
     """
-    Use IBM Docling to extract plain text from a file at file_path.
-    Returns the extracted text as a string.
-    Raises RuntimeError with a friendly message on any failure.
+    Use IBM Docling to extract text from a file at file_path.
+
+    For plain-text files (.txt, .csv) this returns the document's text
+    directly via export_to_text().
+
+    For PDF files this walks every item in the document in reading order
+    using iterate_items() so that narrative paragraphs and table data are
+    both captured:
+      - TextItem  → raw text, appended as-is
+      - TableItem → rendered as a compact Markdown table so row/column
+                    structure is preserved and readable by Granite
+
+    The two content types are joined with blank-line separators into one
+    coherent text block that feeds straight into the triage pipeline.
+
+    Raises RuntimeError with a friendly message on any failure (including
+    scanned-image PDFs that yield no extractable text).
     """
     if not docling_available:
         raise RuntimeError("File upload is not available — Docling library is not installed.")
+
     try:
         result = _docling_converter.convert(file_path)
-        return result.document.export_to_text()
+        doc = result.document
     except Exception as e:
-        logger.error(f"Docling extraction failed: {e}")
-        raise RuntimeError("Couldn't read this file — please check the format and try again.")
+        logger.error(f"Docling conversion failed for '{file_path}': {e}")
+        raise RuntimeError(
+            "Couldn't read this file — it may be a scanned image, corrupted, "
+            "or in an unsupported format. Please check the file and try again."
+        )
+
+    # For non-PDF files the fast path is sufficient.
+    ext = os.path.splitext(file_path)[1].lower()
+    if ext != '.pdf':
+        return doc.export_to_text()
+
+    # PDF path: walk items in document order, preserving tables as Markdown.
+    from docling.datamodel.document import TextItem, TableItem
+
+    segments = []
+    try:
+        for item, _ in doc.iterate_items():
+            if isinstance(item, TableItem):
+                # Render as Markdown so column/row structure survives as
+                # readable lines (e.g. "| Time | Sensor | Value |")
+                table_md = item.export_to_markdown()
+                if table_md.strip():
+                    segments.append(f"[TABLE]\n{table_md.strip()}\n[/TABLE]")
+            elif isinstance(item, TextItem):
+                text = item.text.strip() if item.text else ""
+                if text:
+                    segments.append(text)
+    except Exception as e:
+        logger.error(f"Docling item iteration failed: {e}")
+        raise RuntimeError(
+            "Couldn't read this file — it may be a scanned image, corrupted, "
+            "or in an unsupported format. Please check the file and try again."
+        )
+
+    combined = "\n\n".join(segments)
+
+    if not combined.strip():
+        raise RuntimeError(
+            "No readable text was found in this PDF — it may be a scanned "
+            "image without embedded text. Please use a text-based PDF."
+        )
+
+    return combined
 
 
 # ============================================================================
@@ -312,7 +424,8 @@ def triage():
 @app.route('/api/upload', methods=['POST'])
 def upload():
     """
-    Accept a .txt or .csv file upload, extract its text with IBM Docling,
+    Accept a .txt, .csv, or .pdf file upload, extract its text with IBM
+    Docling (for PDFs: narrative text + tables preserved as Markdown),
     then run the exact same triage analysis as /api/triage.
 
     Returns the same JSON shape as /api/triage so the frontend can reuse
@@ -327,10 +440,10 @@ def upload():
         return jsonify({'error': 'No file selected'}), 400
 
     # Enforce allowed extensions
-    allowed_extensions = {'.txt', '.csv'}
+    allowed_extensions = {'.txt', '.csv', '.pdf'}
     _, ext = os.path.splitext(uploaded_file.filename.lower())
     if ext not in allowed_extensions:
-        return jsonify({'error': 'Only .txt and .csv files are supported'}), 400
+        return jsonify({'error': 'Only .txt, .csv, and .pdf files are supported'}), 400
 
     # Save to a temp file so Docling can read it from disk
     try:
@@ -356,45 +469,76 @@ def upload():
         return jsonify({'error': 'The uploaded file appears to be empty or contained no readable text'}), 422
 
     # ------------------------------------------------------------------
-    # Reuse the exact same Granite / mock-fallback triage pipeline.
-    # We push the extracted text into request context so triage() can
-    # read it, then call it directly.
+    # Triage the extracted content.
+    #
+    # PDF (mission incident report): send the entire document as ONE
+    # request — the report is coherent prose, not a list of log lines.
+    #
+    # .txt / .csv (telemetry log): keep the existing line-by-line loop
+    # with a 1-second delay between requests, unchanged.
     # ------------------------------------------------------------------
     logger.info(f"File extracted successfully ({len(telemetry_text.splitlines())} lines). Running triage...")
 
-    # Build a synthetic JSON body and delegate to the triage logic inline
-    # (avoids an internal HTTP round-trip while still sharing all logic).
-    if granite_model is not None:
-        try:
-            lines = [l.strip() for l in telemetry_text.strip().splitlines() if l.strip()]
-            results = []
-            result_counter = 1
-            for i, line in enumerate(lines):
-                logger.info(f"[upload] Sending line {i + 1}/{len(lines)} to IBM Granite...")
-                prompt = build_triage_prompt(line)
+    if ext == '.pdf':
+        # ---- PDF: single whole-document request ----
+        if granite_model is not None:
+            try:
+                logger.info("[upload] Sending full PDF incident report to IBM Granite...")
+                prompt = build_incident_report_prompt(telemetry_text)
                 response = granite_model.generate_text(prompt=prompt)
-                line_results = parse_granite_response(response, line)
-                for item in line_results:
-                    item['line_number'] = result_counter
-                    result_counter += 1
-                results.extend(line_results)
-                if i < len(lines) - 1:
-                    time.sleep(1)
-            logger.info(f"✅ Granite returned {len(results)} triage result(s) for uploaded file.")
-            return jsonify({
-                'success': True,
-                'message': 'Triage complete (IBM Granite)',
-                'results': results
-            })
-        except Exception as e:
-            logger.error(f"❌ watsonx call failed during upload triage: {e}. Falling back to mock results.")
+                results = parse_granite_response(response, telemetry_text)
+                # Ensure line_number is 1 for the single summary result
+                for item in results:
+                    item['line_number'] = 1
+                logger.info("✅ Granite returned incident report triage result.")
+                return jsonify({
+                    'success': True,
+                    'message': 'Incident report triage complete (IBM Granite)',
+                    'results': results
+                })
+            except Exception as e:
+                logger.error(f"❌ watsonx call failed for PDF triage: {e}. Falling back to mock result.")
 
-    results = get_mock_results(telemetry_text)
-    return jsonify({
-        'success': True,
-        'message': 'Triage complete (mock mode — check API connection)',
-        'results': results
-    })
+        results = get_mock_result_for_document()
+        return jsonify({
+            'success': True,
+            'message': 'Incident report triage complete (mock mode — check API connection)',
+            'results': results
+        })
+
+    else:
+        # ---- .txt / .csv: existing line-by-line loop, untouched ----
+        if granite_model is not None:
+            try:
+                lines = [l.strip() for l in telemetry_text.strip().splitlines() if l.strip()]
+                results = []
+                result_counter = 1
+                for i, line in enumerate(lines):
+                    logger.info(f"[upload] Sending line {i + 1}/{len(lines)} to IBM Granite...")
+                    prompt = build_triage_prompt(line)
+                    response = granite_model.generate_text(prompt=prompt)
+                    line_results = parse_granite_response(response, line)
+                    for item in line_results:
+                        item['line_number'] = result_counter
+                        result_counter += 1
+                    results.extend(line_results)
+                    if i < len(lines) - 1:
+                        time.sleep(1)
+                logger.info(f"✅ Granite returned {len(results)} triage result(s) for uploaded file.")
+                return jsonify({
+                    'success': True,
+                    'message': 'Triage complete (IBM Granite)',
+                    'results': results
+                })
+            except Exception as e:
+                logger.error(f"❌ watsonx call failed during upload triage: {e}. Falling back to mock results.")
+
+        results = get_mock_results(telemetry_text)
+        return jsonify({
+            'success': True,
+            'message': 'Triage complete (mock mode — check API connection)',
+            'results': results
+        })
 
 
 # ============================================================================
