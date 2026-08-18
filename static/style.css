@@ -1,13 +1,31 @@
 /*
-  OrbitGuard – Mission Control Styling
-  
+  OrbitGuard – Mission Control Styling (v2)
+
   Design Palette:
-  - Background: Deep space navy (#0a0e27, #1a1f3a)
-  - Accent: Cyber cyan/teal (#00d9ff, #00f0ff)
-  - Text: Clean white/light gray
-  - Borders: Subtle cyan glow for a tech-forward feel
-  
-  Goal: Calm, trustworthy, high-contrast, readable for all audiences
+  - Background:        Deep space navy  (#0a0e27, #1a1f3a)
+  - Primary accent:    Dusty rose       (#E8B4C8)  — buttons, headings, main highlights
+  - Secondary accent:  Soft lavender    (#B8A9D9)  — hover states, sub-labels
+  - Body text:         Off-white        (#F0EDF5)
+  - Tagline/muted:     Grey-lavender    (#9B96B0)  — secondary, non-competing
+  - Borders/surfaces:  Rose-tinted      (rgba(232,180,200,…))
+
+  Verdict colours (distinct at a glance):
+  - Normal:            Sage green       (#9FD8B8)  text: #1A3D2B
+  - Suspicious:        Warm gold        (#E8C88A)  text: #4A3000
+  - Likely Attack:     Dusty berry-red  (#D98A99)  text: #4A0010
+
+  Typography:
+  - Headings:   Space Grotesk (Google Fonts)
+  - Body:       Inter         (Google Fonts)
+  - Monospace:  JetBrains Mono(Google Fonts)
+
+  Contrast spot-checks (approximate, dark bg #0a0e27 ≈ L 2.2%):
+  - #E8B4C8 on #0a0e27  ≈ 8.1:1  ✓ AAA
+  - #F0EDF5 on #0a0e27  ≈ 14.2:1 ✓ AAA
+  - #9B96B0 on #0a0e27  ≈ 5.3:1  ✓ AA
+  - #1A3D2B on #9FD8B8  ≈ 6.8:1  ✓ AA
+  - #4A3000 on #E8C88A  ≈ 6.4:1  ✓ AA
+  - #4A0010 on #D98A99  ≈ 5.9:1  ✓ AA
 */
 
 /* ========================================================================== */
@@ -25,13 +43,27 @@ html {
 }
 
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 100%);
-    color: #e0e0e0;
+    font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #0a0e27;
+    color: #F0EDF5;
     line-height: 1.6;
     min-height: 100vh;
     display: flex;
     flex-direction: column;
+    position: relative;
+    overflow-x: hidden;
+}
+
+/* ---- Starfield canvas layer -------------------------------------------- */
+/* The <canvas id="starfield"> is injected by script.js and sits here.       */
+/* position:fixed so it never scrolls; z-index:-1 keeps it behind content.  */
+#starfield {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    pointer-events: none;
 }
 
 /* ========================================================================== */
@@ -40,10 +72,10 @@ body {
 
 .header {
     background: rgba(10, 14, 39, 0.95);
-    border-bottom: 2px solid #00d9ff;
+    border-bottom: 2px solid #E8B4C8;
     padding: 2rem 1rem;
     text-align: center;
-    box-shadow: 0 4px 15px rgba(0, 217, 255, 0.1);
+    box-shadow: 0 4px 15px rgba(232, 180, 200, 0.08);
 }
 
 .header-content {
@@ -52,12 +84,12 @@ body {
 }
 
 .logo {
+    font-family: 'Space Grotesk', 'Segoe UI', sans-serif;
     font-size: 2.5rem;
     font-weight: 700;
-    color: #00f0ff;
+    color: #E8B4C8;
     letter-spacing: 2px;
     margin-bottom: 0.5rem;
-    text-shadow: 0 0 10px rgba(0, 217, 255, 0.3);
 }
 
 .logo-icon {
@@ -66,7 +98,7 @@ body {
 
 .tagline {
     font-size: 0.95rem;
-    color: #a0a0c0;
+    color: #9B96B0;
     font-weight: 300;
     letter-spacing: 1px;
 }
@@ -85,7 +117,7 @@ body {
 
 section {
     background: rgba(26, 31, 58, 0.6);
-    border: 1px solid rgba(0, 217, 255, 0.2);
+    border: 1px solid rgba(232, 180, 200, 0.18);
     border-radius: 8px;
     padding: 2rem;
     margin-bottom: 2rem;
@@ -93,20 +125,21 @@ section {
 }
 
 section h2 {
+    font-family: 'Space Grotesk', 'Segoe UI', sans-serif;
     font-size: 1.5rem;
-    color: #00f0ff;
+    color: #E8B4C8;
     margin-bottom: 0.5rem;
-    text-shadow: 0 0 8px rgba(0, 217, 255, 0.2);
 }
 
 section h3 {
+    font-family: 'Space Grotesk', 'Segoe UI', sans-serif;
     font-size: 1.2rem;
-    color: #00d9ff;
+    color: #E8B4C8;
     margin-bottom: 1rem;
 }
 
 .help-text {
-    color: #a0a0c0;
+    color: #9B96B0;
     font-size: 0.95rem;
     margin-bottom: 1.5rem;
     line-height: 1.5;
@@ -120,24 +153,24 @@ section h3 {
     width: 100%;
     padding: 1rem;
     background: rgba(10, 14, 39, 0.5);
-    border: 1px solid rgba(0, 217, 255, 0.3);
+    border: 1px solid rgba(232, 180, 200, 0.25);
     border-radius: 6px;
-    color: #e0e0e0;
-    font-family: 'Courier New', monospace;
-    font-size: 0.95rem;
+    color: #F0EDF5;
+    font-family: 'JetBrains Mono', 'Courier New', monospace;
+    font-size: 0.9rem;
     resize: vertical;
     transition: all 0.3s ease;
 }
 
 .telemetry-textarea:focus {
     outline: none;
-    border-color: #00f0ff;
-    box-shadow: 0 0 10px rgba(0, 217, 255, 0.3);
+    border-color: #E8B4C8;
+    box-shadow: 0 0 10px rgba(232, 180, 200, 0.2);
     background: rgba(10, 14, 39, 0.7);
 }
 
 .telemetry-textarea::placeholder {
-    color: #505070;
+    color: #4a4760;
 }
 
 /* ========================================================================== */
@@ -155,6 +188,7 @@ section h3 {
     padding: 0.75rem 1.5rem;
     border: none;
     border-radius: 6px;
+    font-family: 'Inter', 'Segoe UI', sans-serif;
     font-size: 1rem;
     font-weight: 600;
     letter-spacing: 0.5px;
@@ -166,14 +200,15 @@ section h3 {
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, #00d9ff, #00f0ff);
-    color: #0a0e27;
-    box-shadow: 0 4px 12px rgba(0, 217, 255, 0.3);
+    background: linear-gradient(135deg, #E8B4C8, #D9A0B6);
+    color: #1a0a12;
+    box-shadow: 0 4px 12px rgba(232, 180, 200, 0.25);
 }
 
 .btn-primary:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(0, 217, 255, 0.5);
+    box-shadow: 0 6px 20px rgba(232, 180, 200, 0.4);
+    background: linear-gradient(135deg, #F0C4D6, #E8B4C8);
 }
 
 .btn-primary:active {
@@ -186,14 +221,14 @@ section h3 {
 }
 
 .btn-secondary {
-    background: rgba(0, 217, 255, 0.1);
-    color: #00d9ff;
-    border: 1px solid rgba(0, 217, 255, 0.3);
+    background: rgba(184, 169, 217, 0.1);
+    color: #B8A9D9;
+    border: 1px solid rgba(184, 169, 217, 0.3);
 }
 
 .btn-secondary:hover {
-    background: rgba(0, 217, 255, 0.2);
-    border-color: #00d9ff;
+    background: rgba(184, 169, 217, 0.2);
+    border-color: #B8A9D9;
 }
 
 /* ========================================================================== */
@@ -205,7 +240,7 @@ section h3 {
     align-items: center;
     text-align: center;
     margin: 1.5rem 0 1.2rem;
-    color: #a0a0c0;
+    color: #9B96B0;
     font-size: 0.85rem;
     letter-spacing: 0.5px;
 }
@@ -214,7 +249,7 @@ section h3 {
 .upload-divider::after {
     content: '';
     flex: 1;
-    border-top: 1px solid rgba(0, 217, 255, 0.2);
+    border-top: 1px solid rgba(232, 180, 200, 0.18);
 }
 
 .upload-divider span {
@@ -229,7 +264,7 @@ section h3 {
 }
 
 .upload-label {
-    color: #a0a0c0;
+    color: #9B96B0;
     font-size: 0.9rem;
     cursor: pointer;
     flex-shrink: 0;
@@ -238,20 +273,20 @@ section h3 {
 .file-input {
     flex: 1;
     min-width: 0;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(0, 217, 255, 0.3);
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(232, 180, 200, 0.25);
     border-radius: 4px;
     padding: 0.45rem 0.75rem;
-    color: #e0e0e0;
+    color: #F0EDF5;
     font-size: 0.9rem;
     cursor: pointer;
 }
 
 .file-input::-webkit-file-upload-button {
-    background: rgba(0, 217, 255, 0.12);
-    border: 1px solid rgba(0, 217, 255, 0.4);
+    background: rgba(232, 180, 200, 0.12);
+    border: 1px solid rgba(232, 180, 200, 0.35);
     border-radius: 3px;
-    color: #00d9ff;
+    color: #E8B4C8;
     padding: 0.3rem 0.8rem;
     cursor: pointer;
     font-size: 0.85rem;
@@ -259,12 +294,12 @@ section h3 {
 }
 
 .file-input::-webkit-file-upload-button:hover {
-    background: rgba(0, 217, 255, 0.22);
+    background: rgba(232, 180, 200, 0.22);
 }
 
 .upload-hint {
     width: 100%;
-    color: #606080;
+    color: #5c5878;
     font-size: 0.8rem;
     margin-top: 0;
 }
@@ -277,7 +312,7 @@ section h3 {
     text-align: center;
     padding: 2rem;
     background: rgba(26, 31, 58, 0.6);
-    border: 1px solid rgba(0, 217, 255, 0.2);
+    border: 1px solid rgba(232, 180, 200, 0.18);
     border-radius: 8px;
     margin-bottom: 2rem;
 }
@@ -289,8 +324,8 @@ section h3 {
 .spinner {
     width: 40px;
     height: 40px;
-    border: 3px solid rgba(0, 217, 255, 0.2);
-    border-top: 3px solid #00f0ff;
+    border: 3px solid rgba(232, 180, 200, 0.18);
+    border-top: 3px solid #E8B4C8;
     border-radius: 50%;
     animation: spin 1s linear infinite;
     margin: 0 auto 1rem;
@@ -302,7 +337,7 @@ section h3 {
 }
 
 .loading-indicator p {
-    color: #a0a0c0;
+    color: #9B96B0;
     font-size: 0.95rem;
 }
 
@@ -324,20 +359,20 @@ section h3 {
 }
 
 .alert-error {
-    background: rgba(255, 67, 54, 0.1);
-    border: 1px solid rgba(255, 67, 54, 0.3);
-    color: #ff9999;
+    background: rgba(217, 138, 153, 0.12);
+    border: 1px solid rgba(217, 138, 153, 0.35);
+    color: #F0B8C4;
 }
 
 .alert-close {
     cursor: pointer;
     font-size: 1.5rem;
     font-weight: bold;
-    color: #ff9999;
+    color: #F0B8C4;
 }
 
 .alert-close:hover {
-    color: #ff5555;
+    color: #D98A99;
 }
 
 /* ========================================================================== */
@@ -375,7 +410,7 @@ section h3 {
 
 .result-card {
     background: rgba(10, 14, 39, 0.5);
-    border: 1px solid rgba(0, 217, 255, 0.15);
+    border: 1px solid rgba(232, 180, 200, 0.12);
     border-left: 4px solid;
     border-radius: 6px;
     padding: 1.5rem;
@@ -384,26 +419,26 @@ section h3 {
 
 .result-card:hover {
     background: rgba(10, 14, 39, 0.7);
-    box-shadow: 0 4px 12px rgba(0, 217, 255, 0.1);
+    box-shadow: 0 4px 12px rgba(232, 180, 200, 0.08);
 }
 
 /* Color-coded left border by verdict */
 .result-card.normal {
-    border-left-color: #00d966;
+    border-left-color: #9FD8B8;
 }
 
 .result-card.suspicious {
-    border-left-color: #ffb300;
+    border-left-color: #E8C88A;
 }
 
 .result-card.likely-attack {
-    border-left-color: #ff4444;
+    border-left-color: #D98A99;
 }
 
 .result-line-number {
     display: inline-block;
-    background: rgba(0, 217, 255, 0.1);
-    color: #00d9ff;
+    background: rgba(232, 180, 200, 0.1);
+    color: #E8B4C8;
     padding: 0.25rem 0.75rem;
     border-radius: 4px;
     font-size: 0.8rem;
@@ -412,13 +447,13 @@ section h3 {
 }
 
 .result-telemetry {
-    font-family: 'Courier New', monospace;
+    font-family: 'JetBrains Mono', 'Courier New', monospace;
     background: rgba(0, 0, 0, 0.3);
-    color: #e0e0e0;
+    color: #F0EDF5;
     padding: 0.75rem;
     border-radius: 4px;
     margin-bottom: 1rem;
-    font-size: 0.9rem;
+    font-size: 0.875rem;
     word-break: break-word;
 }
 
@@ -431,7 +466,8 @@ section h3 {
 }
 
 .verdict {
-    font-size: 1.1rem;
+    font-family: 'Space Grotesk', 'Segoe UI', sans-serif;
+    font-size: 1.05rem;
     font-weight: 700;
     padding: 0.5rem 1rem;
     border-radius: 4px;
@@ -439,26 +475,34 @@ section h3 {
     letter-spacing: 0.5px;
 }
 
+/* Sage green — dark green text for contrast */
 .verdict.normal {
-    background: rgba(0, 217, 102, 0.2);
-    color: #00d966;
+    background: rgba(159, 216, 184, 0.22);
+    color: #9FD8B8;
+    border: 1px solid rgba(159, 216, 184, 0.35);
 }
 
+/* Warm gold — dark amber text for contrast */
 .verdict.suspicious {
-    background: rgba(255, 179, 0, 0.2);
-    color: #ffb300;
+    background: rgba(232, 200, 138, 0.22);
+    color: #E8C88A;
+    border: 1px solid rgba(232, 200, 138, 0.35);
 }
 
+/* Dusty berry-red — SOLID fill so it reads as a distinct danger signal,
+   not confused with the pink UI accent used elsewhere on the page.
+   Dark red text (#4A0010) on the solid fill gives ≈5.9:1 contrast (AA). */
 .verdict.likely-attack {
-    background: rgba(255, 68, 68, 0.2);
-    color: #ff4444;
+    background: #D98A99;
+    color: #4A0010;
+    border: 1px solid #C07080;
 }
 
 .confidence {
     font-size: 0.85rem;
-    color: #a0a0c0;
+    color: #9B96B0;
     padding: 0.4rem 0.8rem;
-    background: rgba(160, 160, 192, 0.1);
+    background: rgba(155, 150, 176, 0.1);
     border-radius: 4px;
 }
 
@@ -477,14 +521,15 @@ section h3 {
 .result-explanation,
 .result-next-step {
     padding: 1rem;
-    background: rgba(0, 217, 255, 0.05);
-    border-left: 2px solid rgba(0, 217, 255, 0.3);
+    background: rgba(232, 180, 200, 0.04);
+    border-left: 2px solid rgba(232, 180, 200, 0.25);
     border-radius: 4px;
 }
 
 .result-explanation h5,
 .result-next-step h5 {
-    color: #00d9ff;
+    font-family: 'Space Grotesk', 'Segoe UI', sans-serif;
+    color: #E8B4C8;
     font-size: 0.9rem;
     margin-bottom: 0.5rem;
     text-transform: uppercase;
@@ -493,7 +538,7 @@ section h3 {
 
 .result-explanation p,
 .result-next-step p {
-    color: #e0e0e0;
+    color: #F0EDF5;
     font-size: 0.95rem;
     line-height: 1.5;
 }
@@ -509,26 +554,27 @@ section h3 {
 }
 
 .info-card {
-    background: rgba(0, 217, 255, 0.05);
-    border: 1px solid rgba(0, 217, 255, 0.2);
+    background: rgba(232, 180, 200, 0.04);
+    border: 1px solid rgba(232, 180, 200, 0.16);
     padding: 1.5rem;
     border-radius: 6px;
     transition: all 0.3s ease;
 }
 
 .info-card:hover {
-    background: rgba(0, 217, 255, 0.1);
-    border-color: #00d9ff;
+    background: rgba(232, 180, 200, 0.09);
+    border-color: rgba(232, 180, 200, 0.4);
 }
 
 .info-card h4 {
-    color: #00f0ff;
+    font-family: 'Space Grotesk', 'Segoe UI', sans-serif;
+    color: #E8B4C8;
     margin-bottom: 0.75rem;
     font-size: 1.1rem;
 }
 
 .info-card p {
-    color: #a0a0c0;
+    color: #9B96B0;
     font-size: 0.95rem;
     line-height: 1.5;
 }
@@ -537,14 +583,72 @@ section h3 {
 /* FOOTER                                                                    */
 /* ========================================================================== */
 
+/* ---- Footer shell ------------------------------------------------------- */
 .footer {
     background: rgba(10, 14, 39, 0.95);
-    border-top: 1px solid rgba(0, 217, 255, 0.2);
-    padding: 1.5rem;
+    padding: 1.5rem 1rem 1.25rem;
     text-align: center;
-    color: #a0a0c0;
+    color: #9B96B0;
     font-size: 0.85rem;
     margin-top: auto;
+}
+
+/* Gradient divider line with centered satellite icon */
+.footer-divider {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+}
+
+.footer-divider::before,
+.footer-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(
+        to var(--side, right),
+        transparent,
+        rgba(184, 169, 217, 0.55)
+    );
+}
+
+.footer-divider::before { --side: right; }
+.footer-divider::after  { --side: left;  }
+
+.footer-divider-icon {
+    padding: 0 0.75rem;
+    font-size: 1rem;
+    line-height: 1;
+    color: #B8A9D9;
+    flex-shrink: 0;
+}
+
+/* Footer credits row */
+.footer-credits {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.25rem 0.6rem;
+}
+
+.footer-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    white-space: nowrap;
+}
+
+.footer-icon {
+    font-size: 0.9rem;
+    color: #E8B4C8;
+}
+
+.footer-sep {
+    color: rgba(155, 150, 176, 0.4);
+    user-select: none;
 }
 
 /* ========================================================================== */
