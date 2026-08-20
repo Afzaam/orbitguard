@@ -1,7 +1,26 @@
+<div align="center">
+
 # 🛰️ OrbitGuard
 ### AI-Assisted Telemetry Triage for Space Missions
 
-> **Built for the IBM AI Builders Challenge — Advance Space Exploration with AI**
+*Built for the IBM AI Builders Challenge — Advance Space Exploration with AI*
+
+<br/>
+
+![Python](https://img.shields.io/badge/Python-3.x-E8B4C8?style=for-the-badge&logo=python&logoColor=0a0e27)
+![Flask](https://img.shields.io/badge/Flask-Backend-B8A9D9?style=for-the-badge&logo=flask&logoColor=0a0e27)
+![IBM Granite](https://img.shields.io/badge/IBM_Granite-AI_Reasoning-E8B4C8?style=for-the-badge&logo=ibm&logoColor=0a0e27)
+![watsonx.ai](https://img.shields.io/badge/watsonx.ai-Platform-B8A9D9?style=for-the-badge&logo=ibm&logoColor=0a0e27)
+![IBM Docling](https://img.shields.io/badge/IBM_Docling-Document_Parsing-E8B4C8?style=for-the-badge)
+
+</div>
+<br/>
+<div align="center">
+
+![OrbitGuard landing screen](docs/screenshots/01-landing.png)
+
+</div>
+<br/>
 
 ---
 
@@ -21,7 +40,7 @@ When something goes wrong during a mission, operators may have only minutes to d
 
 ## 🛡️ The Solution
 
-OrbitGuard acts as a **first-pass triage partner** for the human operator. It ingests raw telemetry lines and uses AI to classify each one, delivering:
+OrbitGuard acts as a **first-pass triage partner** for the human operator. It ingests raw telemetry lines (or full mission incident reports) and uses AI to classify each one, delivering:
 
 | Output | Description |
 |---|---|
@@ -38,9 +57,9 @@ OrbitGuard does not make autonomous decisions. It surfaces what matters, explain
 - 🔍 **Line-by-line telemetry analysis** — every log entry gets its own verdict
 - 🧠 **AI-generated explanations** — understand *why* something looks suspicious, not just *that* it does
 - ✅ **Actionable next steps** — no ambiguity; each result tells the operator what to do
-- 🎨 **Mission-control UI** — deep navy + cyan aesthetic built for clarity under pressure
+- 🎨 **Mission-control UI** — deep navy + dusty-rose/lavender aesthetic built for clarity under pressure
 - ⚡ **Zero setup for operators** — paste logs, click a button, get results
-- ♿ **Accessible design** — high-contrast mode, reduced-motion support, large readable fonts
+- 📎 **Flexible ingestion** — paste text directly, or upload `.txt` / `.csv` telemetry logs and `.pdf` mission incident reports
 - 🔒 **Secrets-safe** — API keys live in `.env`, never in the browser or repository
 
 ---
@@ -52,25 +71,25 @@ OrbitGuard uses **IBM Granite** (via **IBM watsonx**) as its reasoning engine. G
 The analysis pipeline is intentionally straightforward:
 
 ```
-[ Operator pastes telemetry logs ]
-            │
-            ▼
-  [ Flask backend receives text ]
-            │
-            ▼
-  [ IBM Granite (via watsonx) analyzes each line ]
-  → Classifies: Normal / Suspicious / Likely Attack
-  → Generates plain-language explanation
-  → Suggests operator next step
-            │
-            ▼
-  [ Results rendered as color-coded verdict cards ]
-  🟢 Normal   🟡 Suspicious   🔴 Likely Attack
+[ Operator pastes telemetry logs or uploads a file ]
+                     │
+                     ▼
+        [ Flask backend receives input ]
+                     │
+                     ▼
+   [ IBM Granite (via watsonx) analyzes each line ]
+   → Classifies: Normal / Suspicious / Likely Attack
+   → Generates plain-language explanation
+   → Suggests operator next step
+                     │
+                     ▼
+   [ Results rendered as color-coded verdict cards ]
+   🟢 Normal   🟡 Suspicious   🔴 Likely Attack
 ```
 
 The prompt is structured to keep Granite grounded in the telemetry context — it is given the telemetry line, the mission context, and asked to reason step by step before delivering a verdict. This reduces hallucination and keeps explanations factual.
 
-**IBM Docling** is integrated in the pipeline to handle uploaded log files, converting `.txt`, `.csv`, `.pdf`, and other formats into structured telemetry that feeds directly into the analysis.
+**IBM Docling** is integrated in the pipeline to handle uploaded files. `.txt` and `.csv` logs are parsed and triaged line-by-line, while `.pdf` mission incident reports are parsed as a single structured document — showcasing Docling's ability to extract and preserve tables and layout from real-world report formats — and triaged as one unified incident.
 
 ---
 
@@ -89,10 +108,11 @@ The prompt is structured to keep Granite grounded in the telemetry context — i
 
 ## 🤝 How IBM Bob Was Used
 
-IBM Bob (the AI coding assistant embedded in VS Code) was the **primary development tool** for this entire project. Bob was used to:
+IBM Bob was the **primary development tool** for this entire project. Bob was used to:
 
 - **Plan the architecture** — breaking the project into stages and mapping out the Flask routes, frontend structure, and AI integration approach before a single line of code was written
 - **Scaffold the codebase** — generating the initial `app.py`, `index.html`, `style.css`, and `script.js` files with full comments and structure
+- **Integrate IBM Granite and Docling** — wiring up the watsonx API calls and file-parsing pipeline through iterative, plain-English prompting
 - **Iterate on the UI** — refining the mission-control aesthetic, color scheme, and component layout through conversation
 - **Write this README** — the full documentation was drafted collaboratively with Bob based on the actual project files
 
@@ -102,11 +122,43 @@ Bob acted as a knowledgeable co-developer throughout — not just an autocomplet
 
 ## 📸 Screenshots
 
-> *(Add your screenshot here — drag an image into this section or paste a relative path below)*
+<br/>
 
-```
-![OrbitGuard UI](static/screenshot.png)
-```
+**Landing screen**
+
+The mission-control interface at rest — a subtle twinkling starfield behind a clean telemetry input panel, ready for an operator to paste logs or upload a file.
+
+![OrbitGuard landing screen](docs/screenshots/01-landing.png)
+
+<br/>
+
+**Running a triage**
+
+Sample telemetry pasted directly into the input box, ready to run.
+
+![Telemetry pasted, ready to run triage](docs/screenshots/02-input-ready.png)
+
+<br/>
+
+**Verdict range: Normal → Likely Attack**
+
+A normal command packet (green, 95% confidence) sits right next to a compromised one flagged as Likely Attack (red, 92% confidence) — showing OrbitGuard's full verdict range in a single triage run, each with its own plain-language analysis and recommended action.
+
+![OrbitGuard verdict cards showing Normal and Likely Attack results](docs/screenshots/03-verdict-attack.png)
+
+<br/>
+
+**Mission incident report (PDF) upload**
+
+A full `.pdf` mission incident report selected and ready for triage, showcasing file upload support alongside pasted-text input.
+
+![PDF mission incident report selected for upload](docs/screenshots/04-pdf-upload.png)
+
+The resulting triage: Docling parses the report as a single structured document, and OrbitGuard delivers one unified verdict for the entire incident.
+
+![PDF mission incident report verdict](docs/screenshots/04-pdf-verdict.png)
+
+<br/>
 
 ---
 
@@ -115,8 +167,8 @@ Bob acted as a knowledgeable co-developer throughout — not just an autocomplet
 ### 1. Clone the repository
 
 ```bash
-git clone <your-repo-url>
-cd OrbitGuard
+git clone https://github.com/Afzaam/orbitguard.git
+cd orbitguard
 ```
 
 ### 2. Create a virtual environment and install dependencies
@@ -176,19 +228,25 @@ SIGNAL_STRENGTH: -120 dBm [WEAK]
 ## 📁 Project Structure
 
 ```
-OrbitGuard/
+orbitguard/
 ├── app.py                 # Flask backend — routes and watsonx integration
 ├── requirements.txt       # Python dependencies
-├── .env.example           # Environment variable template
-├── .gitignore             # Keeps secrets out of version control
-├── README.md              # This file
+├── .env.example            # Environment variable template
+├── .gitignore              # Keeps secrets out of version control
+├── README.md                # This file
+├── docs/
+│   └── screenshots/          # README screenshots
 ├── templates/
-│   └── index.html         # Main UI
+│   └── index.html            # Main UI
 └── static/
-    ├── style.css          # Mission-control styling (deep navy + cyan)
-    └── script.js          # Frontend logic (form, AJAX, result cards)
+    ├── style.css              # Mission-control styling (navy + dusty-rose/lavender)
+    └── script.js               # Frontend logic (form, AJAX, result cards)
 ```
 
 ---
 
+<div align="center">
+
 *OrbitGuard — Built with ❤️ and IBM Bob | IBM AI Builders Challenge 2026*
+
+</div>
