@@ -222,6 +222,7 @@ SIGNAL_STRENGTH: -120 dBm [WEAK]
 - **Mission profile context** — allow operators to specify the spacecraft type, mission phase, and known anomaly baselines so the AI can reason with mission-specific knowledge
 - **Audit trail** — persistent logging of every triage session so operators can review decisions and retrain the model on confirmed incidents
 - **Multi-language support** — internationalization for international mission-control teams
+- **Operator authentication & role-based access control** — secure login for mission-control teams, with permission tiers distinguishing who can run triage versus who can review and act on results, for multi-user deployments
 
 ---
 
