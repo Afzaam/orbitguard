@@ -36,6 +36,8 @@ Modern space systems — satellites, ground stations, and mission-control networ
 
 When something goes wrong during a mission, operators may have only minutes to decide whether they're dealing with a hardware glitch or an active intrusion. Getting that call wrong can mean losing a spacecraft.
 
+This is not hypothetical. In 2007 and 2008, hackers gained unauthorized access to two real NASA/USGS satellites — Landsat-7 and Terra AM-1 — through a ground station in Norway. A US congressional commission later confirmed that in one incident, the intruders "achieved all steps required to command the satellite" but did not issue commands. From the outside, that moment was indistinguishable from ordinary interference. OrbitGuard exists to close exactly that gap.
+
 ---
 
 ## 🛡️ The Solution
