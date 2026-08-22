@@ -232,9 +232,9 @@ SIGNAL_STRENGTH: -120 dBm [WEAK]"
             var cy = canvas.height / 2;
             var r  = Math.sqrt(cx * cx + cy * cy);
             var grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
-            grad.addColorStop(0,   '#141830');   // slightly lighter at centre
-            grad.addColorStop(0.6, '#0d1128');
-            grad.addColorStop(1,   '#060910');   // darker at edges
+            grad.addColorStop(0,   '#10152f');   // slightly lighter at centre
+            grad.addColorStop(0.6, '#0a0e27');
+            grad.addColorStop(1,   '#05070f');   // darker at edges
             ctx.fillStyle = grad;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
         }
