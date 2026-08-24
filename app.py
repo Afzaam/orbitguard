@@ -129,10 +129,13 @@ except Exception as e:
 # PROMPT BUILDERS
 # ============================================================================
 
-def build_triage_prompt(telemetry_text: str) -> str:
+def build_triage_prompt(telemetry_text: str, operator_note: str = None) -> str:
     """
     Build the structured prompt sent to IBM Granite for a single telemetry
     line (used by the paste-text and .txt/.csv upload paths).
+
+    If operator_note is provided, a context line is prepended so Granite
+    can account for the operator's prior override of a similar reading.
 
     We give Granite a clear role (space-mission cybersecurity expert),
     a strict output format (JSON array), and the actual telemetry lines
@@ -141,7 +144,39 @@ def build_triage_prompt(telemetry_text: str) -> str:
     lines = [l.strip() for l in telemetry_text.strip().splitlines() if l.strip()]
     numbered_lines = "\n".join(f"{i+1}. {line}" for i, line in enumerate(lines))
 
-    prompt = f"""You are an expert space-mission cybersecurity analyst. Your job is to triage spacecraft and ground-station telemetry logs and identify signs of cyberattack versus normal operation or hardware malfunction.
+    # Prepend operator feedback context when available
+    operator_context = ""
+    # DEBUG: log whether an operator note reached this function
+    logger.info(f"[DEBUG build_triage_prompt] operator_note={operator_note!r}")
+    if operator_note:
+        operator_context = (
+            f"Operator context: a human operator previously flagged a similar reading with this note: "
+            f"\"{operator_note}\"\n\n"
+            f"When producing the 'explanation' field, you MUST follow one of the two strict templates below "
+            f"depending on the severity of the current reading. Severity is assessed from the telemetry text "
+            f"itself — look for keywords such as CRITICAL, INVALID, unauthorized, unregistered, "
+            f"authentication failure, or command-and-control signals.\n\n"
+            f"TEMPLATE A — use when the reading is LOW-TO-MODERATE risk (no safety-critical keywords present) "
+            f"AND the operator's note plausibly explains it as a known, non-malicious condition:\n"
+            f"  First sentence (REQUIRED, FIXED OPENING): \"Consistent with the operator's prior note that "
+            f"[3-6 word summary of the operator's note], [brief reasoning for the calmer verdict].\"\n"
+            f"  Second sentence: one additional supporting observation, if needed. Maximum 2 sentences total.\n"
+            f"  Also shift the verdict toward Normal or meaningfully lower the confidence for "
+            f"Suspicious/Likely Attack.\n"
+            f"  Example: \"Consistent with the operator's prior note that antenna repositioning causes "
+            f"signal drops, this weak reading is consistent with a scheduled manoeuvre rather than "
+            f"interference.\"\n\n"
+            f"TEMPLATE B — use when the reading is HIGH risk or safety-critical (contains CRITICAL, INVALID, "
+            f"unregistered, unauthorized, authentication failure, or command-and-control signals):\n"
+            f"  Your explanation should open by acknowledging the operator's note, then explain why caution "
+            f"is still warranted despite it. Do not significantly lower the verdict or confidence.\n"
+            f"  Example: \"The operator previously flagged a similar reading as routine sensor calibration; "
+            f"however, the CRITICAL flag and authentication failure indicate this requires independent "
+            f"verification before any action is taken.\"\n"
+            f"  Maximum 2 sentences total.\n\n"
+        )
+
+    prompt = f"""{operator_context}You are an expert space-mission cybersecurity analyst. Your job is to triage spacecraft and ground-station telemetry logs and identify signs of cyberattack versus normal operation or hardware malfunction.
 
 For each telemetry line below, analyse it and respond with a JSON array. Each item in the array must have exactly these fields:
 - "line_number": integer (1-based)
@@ -151,7 +186,7 @@ For each telemetry line below, analyse it and respond with a JSON array. Each it
 - "explanation": a plain-English sentence (max 2 sentences) explaining why
 - "next_step": a concrete action the human operator should take next
 
-Respond with ONLY the JSON array. Do not include any preamble, commentary, or markdown — just the raw JSON array starting with [ and ending with ].
+Output ONLY the JSON array — nothing before the opening [ and nothing after the closing ]. No explanation, no markdown fences, no trailing text of any kind.
 
 Telemetry lines to analyse:
 {numbered_lines}
@@ -181,7 +216,7 @@ Read the full incident report below and provide a single overall triage assessme
 - "explanation": 2–3 plain-English sentences summarising the key findings and why you reached this verdict
 - "next_step": a concrete action the human operator should take next based on the report contents
 
-Respond with ONLY the JSON array. Do not include any preamble, commentary, or markdown — just the raw JSON array starting with [ and ending with ].
+Output ONLY the JSON array — nothing before the opening [ and nothing after the closing ]. No explanation, no markdown fences, no trailing text of any kind.
 
 Mission incident report:
 {report_text.strip()}
@@ -199,19 +234,77 @@ def parse_granite_response(raw_response: str, telemetry_text: str) -> list:
     """
     Extract and validate the JSON array from Granite's response text.
 
-    Granite sometimes wraps JSON in markdown fences or adds a short preamble.
-    We strip those out before parsing, then validate that each result has the
-    fields the frontend expects.
+    Granite sometimes wraps JSON in markdown fences, adds a preamble, or
+    appends stray text after the closing bracket — all of which make a naive
+    json.loads call fail with "Extra data".
+
+    Strategy:
+      1. Strip markdown code fences (``` … ```).
+      2. Locate the first '[' in the cleaned text.
+      3. Walk forward character-by-character tracking bracket depth to find
+         the exact matching ']', ignoring any text outside that span.
+         This avoids the greedy-regex trap where r'\[.*\]' with DOTALL
+         either undershoots (non-greedy) or includes trailing content.
+      4. Parse only that extracted slice.
+      5. On any parse failure, log the full raw Granite response to the
+         terminal so future debugging is instant.
     """
-    # Strip markdown code fences if present (```json ... ``` or ``` ... ```)
+    # Step 1 — strip markdown code fences
     cleaned = re.sub(r'```(?:json)?\s*', '', raw_response).strip()
 
-    # Find the first [ ... ] block in the response
-    match = re.search(r'\[.*\]', cleaned, re.DOTALL)
-    if not match:
+    # Step 2 — find the opening bracket
+    start = cleaned.find('[')
+    if start == -1:
+        logger.error(
+            "parse_granite_response: no '[' found in Granite output.\n"
+            "--- RAW GRANITE RESPONSE ---\n%s\n--- END ---", raw_response
+        )
         raise ValueError("No JSON array found in Granite response")
 
-    results = json.loads(match.group(0))
+    # Step 3 — walk to the matching closing bracket using depth counting
+    depth = 0
+    in_string = False
+    escape_next = False
+    end = -1
+    for i, ch in enumerate(cleaned[start:], start=start):
+        if escape_next:
+            escape_next = False
+            continue
+        if ch == '\\' and in_string:
+            escape_next = True
+            continue
+        if ch == '"' and not escape_next:
+            in_string = not in_string
+            continue
+        if in_string:
+            continue
+        if ch == '[':
+            depth += 1
+        elif ch == ']':
+            depth -= 1
+            if depth == 0:
+                end = i
+                break
+
+    if end == -1:
+        logger.error(
+            "parse_granite_response: unmatched '[' — could not find closing ']'.\n"
+            "--- RAW GRANITE RESPONSE ---\n%s\n--- END ---", raw_response
+        )
+        raise ValueError("Unmatched '[' in Granite response — JSON array is incomplete")
+
+    # Step 4 — parse only the exact slice
+    json_slice = cleaned[start:end + 1]
+    try:
+        results = json.loads(json_slice)
+    except json.JSONDecodeError as exc:
+        logger.error(
+            "parse_granite_response: json.loads failed (%s).\n"
+            "--- EXTRACTED SLICE ---\n%s\n"
+            "--- RAW GRANITE RESPONSE ---\n%s\n--- END ---",
+            exc, json_slice, raw_response
+        )
+        raise ValueError(f"JSON decode error in Granite response: {exc}") from exc
 
     # Validate and normalise each result so the frontend never breaks
     lines = [l.strip() for l in telemetry_text.strip().splitlines() if l.strip()]
@@ -377,6 +470,12 @@ def triage():
     # Send one request per telemetry line, sequentially, with a short
     # delay between each to stay under the free-tier rate limit.
     # ------------------------------------------------------------------
+    # Extract optional per-line operator notes sent by the frontend
+    operator_notes = data.get('operator_notes') or []
+
+    # DEBUG: log what the backend actually received
+    logger.info(f"[DEBUG /api/triage] operator_notes received from frontend: {operator_notes!r}")
+
     if granite_model is not None:
         try:
             lines = [l.strip() for l in telemetry_text.strip().splitlines() if l.strip()]
@@ -384,11 +483,34 @@ def triage():
 
             for i, line in enumerate(lines):
                 logger.info(f"Sending line {i + 1}/{len(lines)} to IBM Granite...")
-                prompt = build_triage_prompt(line)
-                response = granite_model.generate_text(prompt=prompt)
-                # parse_granite_response expects the original text to rebuild
-                # line numbers — pass the single line so it stays consistent.
-                line_results = parse_granite_response(response, line)
+                # Use per-line operator note if available
+                op_note = operator_notes[i] if i < len(operator_notes) else None
+                # DEBUG: log per-line note resolution
+                logger.info(f"[DEBUG] Line {i + 1} op_note={op_note!r} | line={line!r}")
+                prompt = build_triage_prompt(line, operator_note=op_note)
+
+                # Retry up to 2 times on empty or unparseable responses.
+                max_attempts = 3
+                line_results = None
+                last_exc = None
+                for attempt in range(1, max_attempts + 1):
+                    if attempt > 1:
+                        logger.warning(f"Retry {attempt - 1}/{max_attempts - 1} for line {i + 1} after empty/unparseable response — waiting 2s...")
+                        time.sleep(2)
+                    try:
+                        response = granite_model.generate_text(prompt=prompt)
+                        # parse_granite_response expects the original text to rebuild
+                        # line numbers — pass the single line so it stays consistent.
+                        line_results = parse_granite_response(response, line)
+                        break  # success — exit retry loop
+                    except (ValueError, Exception) as exc:
+                        last_exc = exc
+                        logger.warning(f"Attempt {attempt}/{max_attempts} failed for line {i + 1}: {exc}")
+
+                if line_results is None:
+                    # All attempts exhausted — re-raise so the outer except falls back to mock.
+                    raise last_exc
+
                 # Re-stamp the line number relative to the full input.
                 for item in line_results:
                     item['line_number'] = i + 1
