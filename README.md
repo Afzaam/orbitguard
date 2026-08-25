@@ -58,6 +58,7 @@ OrbitGuard does not make autonomous decisions. It surfaces what matters, explain
 
 - 🔍 **Line-by-line telemetry analysis** — every log entry gets its own verdict
 - 🧠 **AI-generated explanations** — understand *why* something looks suspicious, not just *that* it does
+- ⟡ **Operator feedback loop** — confirm a verdict or log an override with a note; OrbitGuard remembers it, and future similar readings are reasoned about in light of that feedback — without ever overriding the operator's authority to decide
 - ✅ **Actionable next steps** — no ambiguity; each result tells the operator what to do
 - 🎨 **Mission-control UI** — deep navy + dusty-rose/lavender aesthetic built for clarity under pressure
 - ⚡ **Zero setup for operators** — paste logs, click a button, get results
@@ -90,6 +91,41 @@ The analysis pipeline is intentionally straightforward:
 ```
 
 The prompt is structured to keep Granite grounded in the telemetry context — it is given the telemetry line, the mission context, and asked to reason step by step before delivering a verdict. This reduces hallucination and keeps explanations factual.
+
+---
+
+### 🔁 The Operator Feedback Loop
+
+OrbitGuard treats the human operator as more than an end recipient of verdicts — their judgment actively shapes future analysis. Every verdict card carries two actions:
+
+| Action | What Happens |
+|---|---|
+| **Confirm** | Locks in agreement with Granite's verdict — stamped ◇ Verdict Confirmed |
+| **Log Override** | Operator adds a note explaining their own read of the situation — stamped ◇ Operator-Flagged |
+
+This feedback is stored locally per operator session. When a new telemetry reading shares a sensor or parameter with a previously-reviewed one, OrbitGuard surfaces the operator's earlier note directly inside Granite's reasoning prompt — visibly marked on the resulting card with *"Adjusted from operator feedback on a similar reading."*
+
+```
+[ Operator confirms ◇ or overrides ⟡ a verdict, optionally with a note ]
+                          │
+                          ▼
+         [ Feedback stored locally, keyed to the reading ]
+                          │
+                          ▼
+   [ A similar reading appears in a future triage run ]
+                          │
+                          ▼
+   [ Granite reasons with that operator context in view ]
+   → Low-risk readings: verdict may relax, and Granite's own
+     explanation references the operator's note directly
+   → High-risk / critical readings: verdict holds firm —
+     operator context informs the analysis, never softens
+     a genuine threat assessment
+```
+
+Crucially, this is **feedback, not automation**. Granite doesn't remember on its own initiative, and it never lets a past override silently reclassify a genuinely dangerous reading. The operator's authority to confirm or override *again* is always live — every card, every time. This is "AI explains, human decides" made visible and persistent, not just a stated principle.
+
+---
 
 **IBM Docling** is integrated in the pipeline to handle uploaded files. `.txt` and `.csv` logs are parsed and triaged line-by-line, while `.pdf` mission incident reports are parsed as a single structured document — showcasing Docling's ability to extract and preserve tables and layout from real-world report formats — and triaged as one unified incident.
 
