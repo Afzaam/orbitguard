@@ -304,7 +304,7 @@ function displayResults(results, influenced) {
     resultsSection.classList.remove('hidden');
     resultsList.innerHTML = '';
 
-    // Render the "Clear Review History" link before the cards
+    // Render the "Clear Review History" pill once at the panel level (not per-card).
     const clearLink = buildClearHistoryLink();
     resultsList.appendChild(clearLink);
 
@@ -332,7 +332,7 @@ function createResultCard(result, wasInfluenced) {
 
     const card = document.createElement('div');
     card.className = `result-card ${verdictClass}`;
-    card.style.position = 'relative'; // needed for absolute-positioned tag
+    card.style.position = 'relative'; // keeps card as positioning context
 
     // ---- Line number badge ----
     const lineNumber = document.createElement('div');
@@ -344,7 +344,7 @@ function createResultCard(result, wasInfluenced) {
     telemetryDisplay.className = 'result-telemetry';
     telemetryDisplay.textContent = result.telemetry;
 
-    // ---- Header: verdict + confidence ----
+    // ---- Header: verdict + confidence (+ status tag slot) ----
     const header = document.createElement('div');
     header.className = 'result-header';
 
@@ -358,6 +358,7 @@ function createResultCard(result, wasInfluenced) {
 
     header.appendChild(verdictBadge);
     header.appendChild(confidenceBadge);
+    // Status tag (pill badge) is appended here when operator acts — see applyTagToCard()
 
     // ---- Body: explanation + next step ----
     const body = document.createElement('div');
@@ -389,7 +390,7 @@ function createResultCard(result, wasInfluenced) {
     body.appendChild(nextStepDiv);
 
     // ---- Feedback controls ----
-    const feedbackRow = buildFeedbackControls(result.telemetry, card);
+    const feedbackRow = buildFeedbackControls(result.telemetry, card, header);
 
     // ---- Assemble ----
     card.appendChild(lineNumber);
@@ -417,9 +418,10 @@ function createResultCard(result, wasInfluenced) {
  * Build the Confirm / Log Override control row for a result card.
  * @param {string}      telemetry - The raw telemetry text (used as the record key)
  * @param {HTMLElement} card      - The parent card element (for tag injection)
+ * @param {HTMLElement} header    - The result-header element (where the status tag is inserted)
  * @returns {HTMLElement}
  */
-function buildFeedbackControls(telemetry, card) {
+function buildFeedbackControls(telemetry, card, header) {
     const row = document.createElement('div');
     row.className = 'feedback-row';
 
@@ -427,11 +429,11 @@ function buildFeedbackControls(telemetry, card) {
     const confirmBtn = document.createElement('button');
     confirmBtn.type = 'button';
     confirmBtn.className = 'feedback-btn feedback-btn--confirm';
-    confirmBtn.textContent = 'Confirm';
+    confirmBtn.innerHTML = '&#10003; Confirm'; // ✓ checkmark icon
 
     confirmBtn.addEventListener('click', () => {
         recordConfirm(telemetry);
-        applyTagToCard(card, 'confirm');
+        applyTagToCard(card, 'confirm', header);
         row.style.display = 'none';
     });
 
@@ -439,12 +441,27 @@ function buildFeedbackControls(telemetry, card) {
     const overrideBtn = document.createElement('button');
     overrideBtn.type = 'button';
     overrideBtn.className = 'feedback-btn feedback-btn--override';
-    overrideBtn.textContent = 'Log Override';
+    overrideBtn.innerHTML = '&#9998; Log Override'; // ✎ pencil/edit icon
 
     // ---- Override input panel (hidden until Log Override is clicked) ----
     const inputPanel = document.createElement('div');
     inputPanel.className = 'override-input-panel';
     inputPanel.style.display = 'none';
+
+    // Label row: "OPERATOR NOTE" label + live character counter
+    const noteLabel = document.createElement('div');
+    noteLabel.className = 'override-note-label';
+
+    const noteLabelText = document.createElement('span');
+    noteLabelText.className = 'override-note-label-text';
+    noteLabelText.textContent = 'Operator Note';
+
+    const noteCounter = document.createElement('span');
+    noteCounter.className = 'override-note-counter';
+    noteCounter.textContent = '0/150';
+
+    noteLabel.appendChild(noteLabelText);
+    noteLabel.appendChild(noteCounter);
 
     const noteInput = document.createElement('input');
     noteInput.type = 'text';
@@ -463,8 +480,10 @@ function buildFeedbackControls(telemetry, card) {
     cancelBtn.className = 'feedback-btn feedback-btn--cancel';
     cancelBtn.textContent = 'Cancel';
 
-    // Enable save only when input has text
+    // Enable save only when input has text; update live counter on every keystroke
     noteInput.addEventListener('input', () => {
+        const len = noteInput.value.length;
+        noteCounter.textContent = `${len}/150`;
         saveBtn.disabled = noteInput.value.trim().length === 0;
     });
 
@@ -480,6 +499,7 @@ function buildFeedbackControls(telemetry, card) {
         overrideBtn.style.display = '';
         confirmBtn.style.display = '';
         noteInput.value = '';
+        noteCounter.textContent = '0/150';
         saveBtn.disabled = true;
     });
 
@@ -487,11 +507,12 @@ function buildFeedbackControls(telemetry, card) {
         const note = noteInput.value.trim();
         if (!note) return; // guard — should be disabled anyway
         recordOverride(telemetry, note);
-        applyTagToCard(card, 'override');
+        applyTagToCard(card, 'override', header);
         row.style.display = 'none';
         showFeedbackSavedToast(card);
     });
 
+    inputPanel.appendChild(noteLabel);
     inputPanel.appendChild(noteInput);
     inputPanel.appendChild(saveBtn);
     inputPanel.appendChild(cancelBtn);
@@ -504,29 +525,38 @@ function buildFeedbackControls(telemetry, card) {
 }
 
 /**
- * Inject a permanent status tag into a card corner.
- * @param {HTMLElement} card
+ * Inject a permanent status tag (pill badge) into the result-header row.
+ * @param {HTMLElement} card   - The parent card (used for idempotent cleanup)
  * @param {'confirm'|'override'} action
+ * @param {HTMLElement} [header] - The result-header element; falls back to querySelector
  */
-function applyTagToCard(card, action) {
+function applyTagToCard(card, action, header) {
     // Remove any existing tag first (idempotent)
     const existing = card.querySelector('.card-status-tag');
     if (existing) existing.remove();
 
     const tag = document.createElement('span');
     tag.className = `card-status-tag card-status-tag--${action}`;
-    tag.textContent = action === 'confirm' ? '⟡ Verdict Confirmed' : '⟡ Operator-flagged';
-    card.appendChild(tag);
+    tag.textContent = action === 'confirm' ? '◇ Verdict Confirmed' : '◇ Operator-Flagged';
+
+    // Insert into the header row so the badge sits at top-right beside verdict/confidence
+    const targetHeader = header || card.querySelector('.result-header');
+    if (targetHeader) {
+        targetHeader.appendChild(tag);
+    } else {
+        card.appendChild(tag);
+    }
 }
 
 /**
- * Show a "Feedback saved ✓" toast that fades in and then persists briefly.
+ * Show a "Feedback saved ✓" pill toast that fades in and then persists briefly.
  * @param {HTMLElement} card
  */
 function showFeedbackSavedToast(card) {
     const toast = document.createElement('span');
     toast.className = 'feedback-saved-toast';
-    toast.textContent = 'Feedback saved ✓';
+    toast.innerHTML = '&#10003; Feedback saved'; // ✓ checkmark
+
     card.appendChild(toast);
 
     // Trigger fade-in on next frame
@@ -534,11 +564,11 @@ function showFeedbackSavedToast(card) {
         requestAnimationFrame(() => { toast.classList.add('visible'); });
     });
 
-    // Fade out after 2.5 s, then remove
+    // Fade out after 5 s (doubled from original 2.5 s), then remove
     setTimeout(() => {
         toast.classList.remove('visible');
         toast.addEventListener('transitionend', () => toast.remove(), { once: true });
-    }, 2500);
+    }, 5000);
 }
 
 // ============================================================================
@@ -546,7 +576,8 @@ function showFeedbackSavedToast(card) {
 // ============================================================================
 
 /**
- * Build the unobtrusive "Clear Review History" link shown above the cards.
+ * Build the "Clear Review History" pill button for the panel header.
+ * Returns the wrapper div (not the full panel header — caller assembles the header).
  * @returns {HTMLElement}
  */
 function buildClearHistoryLink() {
@@ -556,7 +587,7 @@ function buildClearHistoryLink() {
     const link = document.createElement('button');
     link.type = 'button';
     link.className = 'clear-history-link';
-    link.textContent = '⊘ Clear Review History';
+    link.innerHTML = '&#128465; Clear Review History'; // 🗑 trash/bin icon
 
     link.addEventListener('click', () => showClearHistoryModal());
 
@@ -583,14 +614,15 @@ function showClearHistoryModal() {
     dialog.setAttribute('aria-labelledby', 'modalTitle');
 
     dialog.innerHTML = `
-        <h4 id="modalTitle" class="modal-title">⚠️ Clear Review History</h4>
+        <div class="modal-icon">&#9203;</div>
+        <h4 id="modalTitle" class="modal-title">Clear review history?</h4>
         <p class="modal-body">
-            This will permanently clear all Confirmed and Operator-flagged history
-            for this session. This cannot be undone.
+            This permanently removes every Confirm and Override record from this session.
+            Past verdicts stay as-is, but future triage runs won't be able to reference this feedback.
         </p>
         <div class="modal-actions">
             <button type="button" class="modal-btn modal-btn--cancel" id="modalCancel">Cancel</button>
-            <button type="button" class="modal-btn modal-btn--confirm-clear" id="modalConfirmClear">Yes, Clear History</button>
+            <button type="button" class="modal-btn modal-btn--confirm-clear" id="modalConfirmClear">Clear History</button>
         </div>
     `;
 
