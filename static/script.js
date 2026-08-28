@@ -247,14 +247,18 @@ async function runTriage() {
 }
 
 /**
- * Upload a .txt or .csv file to /api/upload and triage it via Docling.
+ * Upload a .txt, .csv, or .pdf file to /api/upload and triage it via Docling.
  * Reuses displayResults() for rendering — no duplication of result logic.
+ *
+ * PDF files use a stable filename-based key (`pdf::<filename>`) for localStorage
+ * so that re-uploading the same PDF always finds the matching override entry,
+ * regardless of how Granite's one-sentence summary varies between calls.
  */
 async function uploadFile() {
     const file = fileInput.files[0];
 
     if (!file) {
-        showError('Please choose a .txt or .csv file before uploading.');
+        showError('Please choose a .txt, .csv, or .pdf file before uploading.');
         return;
     }
 
@@ -263,6 +267,15 @@ async function uploadFile() {
     resultsList.innerHTML = '';
     loadingIndicator.classList.remove('hidden');
     uploadButton.disabled = true;
+
+    // Derive a stable PDF key BEFORE the API call so save and lookup always agree.
+    const ext = file.name.split('.').pop().toLowerCase();
+    const pdfKey = (ext === 'pdf') ? ('pdf::' + file.name) : null;
+
+    // DEBUG: log the key that will be searched for on this upload.
+    if (pdfKey) {
+        console.log('[OrbitGuard PDF] Lookup key for this upload:', pdfKey);
+    }
 
     try {
         const formData = new FormData();
@@ -280,7 +293,20 @@ async function uploadFile() {
         }
 
         if (data.success && data.results) {
-            displayResults(data.results, data.results.map(() => false));
+            // For PDFs: check override history using an exact key match on the stable
+            // filename-based key.  We MUST use getExactEntry here, not findSimilarOverride,
+            // because findSimilarOverride relies on uppercase token extraction and
+            // "pdf::filename.pdf" contains no uppercase tokens — it would always return null.
+            // For txt/csv: pass false (line-by-line path handles its own matching via runTriage).
+            const influenced = data.results.map(() => {
+                if (pdfKey) {
+                    const match = getExactEntry(pdfKey);
+                    console.log('[OrbitGuard PDF] wasInfluenced check — getExactEntry result:', match);
+                    return match !== null && match.action === 'override';
+                }
+                return false;
+            });
+            displayResults(data.results, influenced, pdfKey);
         } else {
             throw new Error(data.error || 'Unexpected response from server');
         }
@@ -297,10 +323,11 @@ async function uploadFile() {
 
 /**
  * Display triage results to the user.
- * @param {Array}   results    - Array of result objects from the backend
- * @param {Array}   influenced - Parallel boolean array; true if card was adjusted by prior feedback
+ * @param {Array}        results    - Array of result objects from the backend
+ * @param {Array}        influenced - Parallel boolean array; true if card was adjusted by prior feedback
+ * @param {string|null}  pdfKey     - Stable `pdf::<filename>` key for PDF uploads; null for txt/csv
  */
-function displayResults(results, influenced) {
+function displayResults(results, influenced, pdfKey = null) {
     resultsSection.classList.remove('hidden');
     resultsList.innerHTML = '';
 
@@ -310,7 +337,7 @@ function displayResults(results, influenced) {
 
     results.forEach((result, idx) => {
         const wasInfluenced = Array.isArray(influenced) && influenced[idx] === true;
-        const card = createResultCard(result, wasInfluenced);
+        const card = createResultCard(result, wasInfluenced, pdfKey);
         resultsList.appendChild(card);
     });
 
@@ -323,11 +350,12 @@ function displayResults(results, influenced) {
 
 /**
  * Create a result card element for a single telemetry line.
- * @param {Object}  result        - Result object containing verdict, confidence, etc.
- * @param {boolean} wasInfluenced - True if the prompt was adjusted by prior operator feedback
+ * @param {Object}      result        - Result object containing verdict, confidence, etc.
+ * @param {boolean}     wasInfluenced - True if the prompt was adjusted by prior operator feedback
+ * @param {string|null} pdfKey        - Stable `pdf::<filename>` key for PDF uploads; null for txt/csv
  * @returns {HTMLElement}
  */
-function createResultCard(result, wasInfluenced) {
+function createResultCard(result, wasInfluenced, pdfKey = null) {
     const verdictClass = result.verdict.toLowerCase().replace(/\s+/g, '-');
 
     const card = document.createElement('div');
@@ -389,8 +417,12 @@ function createResultCard(result, wasInfluenced) {
     body.appendChild(explanationDiv);
     body.appendChild(nextStepDiv);
 
+    // For PDF cards, use the stable filename-based key for all localStorage operations.
+    // For txt/csv cards, use result.telemetry (the raw log line) as before.
+    const storageKey = pdfKey || result.telemetry;
+
     // ---- Feedback controls ----
-    const feedbackRow = buildFeedbackControls(result.telemetry, card, header);
+    const feedbackRow = buildFeedbackControls(storageKey, card, header);
 
     // ---- Assemble ----
     card.appendChild(lineNumber);
@@ -400,7 +432,7 @@ function createResultCard(result, wasInfluenced) {
     card.appendChild(feedbackRow);
 
     // Restore any saved state from localStorage
-    const existing = getExactEntry(result.telemetry);
+    const existing = getExactEntry(storageKey);
     if (existing) {
         applyTagToCard(card, existing.action);
         // Hide feedback controls — operator already acted
@@ -507,6 +539,8 @@ function buildFeedbackControls(telemetry, card, header) {
         const note = noteInput.value.trim();
         if (!note) return; // guard — should be disabled anyway
         recordOverride(telemetry, note);
+        // DEBUG: log the exact key being stored so we can verify it matches on re-upload.
+        console.log('[OrbitGuard PDF] Override saved with key:', telemetry);
         applyTagToCard(card, 'override', header);
         row.style.display = 'none';
         showFeedbackSavedToast(card);
