@@ -186,15 +186,43 @@ A normal command packet (green, 95% confidence) sits right next to a compromised
 
 <br/>
 
+**Operator confirms a verdict**
+
+When Granite's read matches the operator's own judgment, one click locks it in — no re-typing, no second-guessing the obvious.
+
+![Operator confirming a Likely Attack verdict](docs/screenshots/04-operator-confirm.png)
+
+<br/>
+
+**Operator override — the feedback loop in action**
+
+An operator flags a Suspicious verdict (75% confidence) with a note linking it to a related anomaly elsewhere in the log. The next time OrbitGuard sees a similar reading, Granite factors that human judgment into its reasoning — upgrading the verdict to Likely Attack (85% confidence) and marking the card OPERATOR-FLAGGED, with a visible note that the read was adjusted from prior operator feedback.
+
+![Verdict card upgraded from operator feedback, marked OPERATOR-FLAGGED](docs/screenshots/05-operator-override.png)
+
+<br/>
+
+**Clearing review history**
+
+A confirmation step before wiping stored operator feedback for the session — a deliberate reset, not an accidental one.
+
+![Clear review history confirmation modal](docs/screenshots/06-clear-history.png)
+
+<br/>
+
 **Mission incident report (PDF) upload**
 
 A full `.pdf` mission incident report selected and ready for triage, showcasing file upload support alongside pasted-text input.
 
-![PDF mission incident report selected for upload](docs/screenshots/04-pdf-upload.png)
+![PDF mission incident report selected for upload](docs/screenshots/07-pdf-upload.png)
 
-The resulting triage: Docling parses the report as a single structured document, and OrbitGuard delivers one unified verdict for the entire incident.
+<br/>
 
-![PDF mission incident report verdict](docs/screenshots/04-pdf-verdict.png)
+**Mission incident report (PDF) verdict**
+
+Docling parses the report as a single structured document, and OrbitGuard delivers one unified verdict for the entire incident.
+
+![PDF mission incident report verdict](docs/screenshots/08-pdf-verdict.png)
 
 <br/>
 
